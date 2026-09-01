@@ -133,6 +133,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { initializeAppCheck, RecaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAoNFbS548PhPO1XmfXfDBiSfHzJ5WRvDY",
@@ -145,6 +146,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        initializeAppCheck(app, { provider: new RecaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
 
         async function loadTermsOfService() {
             try {

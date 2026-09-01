@@ -224,24 +224,26 @@
         .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.8rem; margin-top: 2rem; }
         .products-roll { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; padding-bottom: 1rem; }
         @media (min-width: 600px) { .products-roll { grid-template-columns: repeat(4, 1fr); } }
-        @media (min-width: 900px) { .products-roll { grid-template-columns: repeat(6, 1fr); } }
-        @media (min-width: 1200px) { .products-roll { grid-template-columns: repeat(8, 1fr); } }
-        @media (min-width: 1500px) { .products-roll { grid-template-columns: repeat(10, 1fr); } }
+        @media (min-width: 900px) { .products-roll { grid-template-columns: repeat(5, 1fr); } }
+        @media (min-width: 1200px) { .products-roll { grid-template-columns: repeat(6, 1fr); } }
+        @media (min-width: 1500px) { .products-roll { grid-template-columns: repeat(6, 1fr); } }
         .products-roll::-webkit-scrollbar { height: 6px; }
         .products-roll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
         .products-roll::-webkit-scrollbar-thumb { background: #667eea; border-radius: 3px; }
-        .product-card { background: white; border-radius: 12px; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 1px 8px rgba(0,0,0,0.08); position: relative; cursor: pointer; }
-        .product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 18px rgba(0,0,0,0.12); }
-        .wishlist-btn { position: absolute; top: 8px; left: 8px; background: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.12); z-index: 10; }
+        .product-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.08); position: relative; cursor: pointer; transition: box-shadow 0.2s; display: flex; flex-direction: column; height: 100%; }
+        .product-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+        .wishlist-btn { position: absolute; top: 8px; right: 8px; background: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.12); z-index: 10; }
         .wishlist-btn i { font-size: 0.9rem; }
-        .product-image { width: 100%; height: 180px; object-fit: cover; background: #f5f5f5; display: block; }
-        .product-info { padding: 6px; }
-        .product-info .product-name { font-size: 11px; line-height: 1.2; margin-bottom: 0.2rem; font-weight: 600; }
-        .product-info .product-price { font-size: 11px; margin-bottom: 0.1rem; color: #667eea; font-weight: 700; }
-        .product-info .product-old-price { font-size: 10px; color: #999; text-decoration: line-through; }
-        .product-info .product-stock { font-size: 9px; margin-bottom: 0.4rem; }
-        .product-info .add-to-cart { width: 100%; padding: 5px; font-size: 11px; }
-        .discount-badge { position: absolute; top: 8px; right: 8px; background: #ff4757; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; z-index: 5; }
+        .product-image { width: 100%; height: 180px; object-fit: contain; background: #fafafa; display: block; padding: 10px; }
+        .product-info { padding: 10px; flex: 1; display: flex; flex-direction: column; }
+        .product-brand { font-size: 10px; color: #999; text-transform: uppercase; margin-bottom: 2px; font-weight: 600; }
+        .product-name { font-size: 12px; line-height: 1.3; margin-bottom: 4px; font-weight: 600; color: #333; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; height: 32px; }
+        .product-rating { font-size: 11px; color: #ffc107; margin-bottom: 4px; display: flex; align-items: center; gap: 2px; }
+        .product-rating .review-count { color: #999; font-size: 10px; }
+        .product-price { font-size: 14px; font-weight: 700; margin-bottom: 2px; color: #333; }
+        .product-old-price { font-size: 11px; color: #999; text-decoration: line-through; margin-bottom: 4px; }
+        .product-info .product-stock { font-size: 9px; margin-bottom: 4px; }
+        .discount-badge { position: absolute; top: 8px; left: 8px; background: #ff6b00; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; z-index: 5; }
         .view-all-btn { background: #667eea; color: white; padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; text-decoration: none; font-size: 0.9rem; }
         .view-all-btn:hover { background: #5568d3; }
         .flash-timer { background: linear-gradient(135deg, #ff4757, #ff6b81); color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
@@ -516,6 +518,9 @@
     </div>
 
     <div class="main-content">
+        <div id="emailVerificationBanner" style="display: none; background: #fff3cd; color: #856404; padding: 12px 20px; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #ffc107;">
+            <i class="fas fa-exclamation-triangle"></i> Please verify your email address. Check your inbox for the verification link. <a href="#" onclick="window.resendVerificationEmail()" style="color: #856404; font-weight: bold; text-decoration: underline;">Resend</a>
+        </div>
         <div class="hero">
             <h2 id="welcomeText">Welcome to Jefram Stores</h2>
             <p id="heroText">Quality products delivered to your doorstep anywhere in Uganda</p>
@@ -838,7 +843,8 @@
                 <input type="email" id="customerEmail" placeholder="Email (required)" required>
                 <input type="text" id="customerWhatsapp" placeholder="WhatsApp Number (optional)">
                 <input type="text" id="customerLocation" placeholder="Location in Uganda" required>
-                <input type="password" id="customerPassword" placeholder="Password (min 6 characters)" required>
+                <input type="password" id="customerPassword" placeholder="Password (min 8 chars, 1 uppercase, 1 number)" required>
+                <div id="passwordStrength" style="font-size: 12px; margin-top: 4px;"></div>
                 <button onclick="window.registerUser()" style="background: #667eea; color: white; padding: 12px; border: none; border-radius: 8px;">Register</button>
             </div>
             <p style="margin-top: 10px; text-align: center;">Already have an account? <a href="#" onclick="window.closeRegisterModal(); window.openLoginModal();" style="color: #667eea;">Sign In</a></p>
@@ -851,7 +857,8 @@
             "imports": {
                 "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
                 "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
-                "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
+                "firebase/app-check": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js"
             }
         }
     </script>
@@ -860,6 +867,7 @@
         import { initializeApp } from "firebase/app";
         import { getFirestore, collection, getDocs, addDoc, query, where, updateDoc, doc, deleteDoc, getDoc, orderBy, limit, onSnapshot, setDoc } from "firebase/firestore";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateEmail, updatePassword, deleteUser, sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+        import { initializeAppCheck, RecaptchaV3Provider } from "firebase/app-check";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAoNFbS548PhPO1XmfXfDBiSfHzJ5WRvDY",
@@ -875,11 +883,15 @@
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
+            initializeAppCheck(app, { provider: new RecaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
             console.log('Firebase connected successfully');
         } catch (error) {
             console.error('Firebase initialization error:', error);
             window.showToast('Failed to connect to database. Please refresh the page.', 'error');
-            document.getElementById('productsGrid').innerHTML = '<div style="text-align:center; padding:2rem; color:red;">Database connection failed. Please refresh the page.</div>';
+            const productsContainer = document.getElementById('productsContainer');
+            if (productsContainer) {
+                productsContainer.innerHTML = '<div style="text-align:center; padding:2rem; color:red;">Database connection failed. Please refresh the page.</div>';
+            }
         }
 
         // Global variables
@@ -2081,19 +2093,48 @@
 
         // ===== FIREBASE AUTH: USER REGISTRATION (email/password) =====
         let isRegistering = false;
+        window.checkPasswordStrength = function(password) {
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (password.match(/[A-Z]/)) strength++;
+            if (password.match(/[a-z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            if (password.match(/[^A-Za-z0-9]/)) strength++;
+            
+            const colors = ['#dc3545', '#dc3545', '#ffc107', '#28a745', '#28a745'];
+            const labels = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
+            const color = colors[strength - 1] || '#ddd';
+            const label = labels[strength - 1] || 'Too Short';
+            
+            const el = document.getElementById('passwordStrength');
+            if (el) {
+                el.style.color = color;
+                el.textContent = password.length > 0 ? 'Password strength: ' + label : '';
+            }
+            return strength >= 4;
+        };
+
+        window.sanitizeInput = function(value) {
+            if (typeof value !== 'string') return '';
+            return value.trim().replace(/<[^>]*>/g, '').replace(/[\x00-\x1F\x7F]/g, '');
+        };
+
         window.registerUser = async function() {
             if (!db || !auth) { window.showToast('Database not connected', 'error'); return; }
-            const name = document.getElementById('customerName').value.trim();
-            const phone = document.getElementById('customerPhone').value.trim();
-            const email = document.getElementById('customerEmail').value.trim();
-            const whatsapp = document.getElementById('customerWhatsapp').value.trim();
-            const location = document.getElementById('customerLocation').value.trim();
-            const password = document.getElementById('customerPassword').value.trim();
+            const name = window.sanitizeInput(document.getElementById('customerName').value);
+            const phone = window.sanitizeInput(document.getElementById('customerPhone').value);
+            const email = window.sanitizeInput(document.getElementById('customerEmail').value).toLowerCase();
+            const whatsapp = window.sanitizeInput(document.getElementById('customerWhatsapp').value);
+            const location = window.sanitizeInput(document.getElementById('customerLocation').value);
+            const password = document.getElementById('customerPassword').value;
 
             if (!name || !phone || !email || !location || !password) { window.showToast('Fill all required fields', 'error'); return; }
             if (!phone.match(/^[0-9]{10,13}$/)) { window.showToast('Valid phone number required', 'error'); return; }
             if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) { window.showToast('Valid email required', 'error'); return; }
-            if (password.length < 6) { window.showToast('Password must be at least 6 characters', 'error'); return; }
+            if (password.length < 8) { window.showToast('Password must be at least 8 characters', 'error'); return; }
+            if (!password.match(/[A-Z]/)) { window.showToast('Password must contain at least one uppercase letter', 'error'); return; }
+            if (!password.match(/[0-9]/)) { window.showToast('Password must contain at least one number', 'error'); return; }
+            if (!window.checkPasswordStrength(password)) { window.showToast('Password is too weak. Please use a stronger password.', 'error'); return; }
             isRegistering = true;
             try {
                 const userCred = await createUserWithEmailAndPassword(auth, email, password);
@@ -2110,7 +2151,8 @@
                     cart: []
                 };
                 await setDoc(doc(db, 'customers', currentUserDocId), currentUser);
-                window.showToast('Registration successful!', 'success');
+                try { await user.sendEmailVerification(); } catch(e) { console.error('Verification email error:', e); }
+                window.showToast('Registration successful! Please verify your email.', 'success');
 
                 await window.loadWishlistFromFirebase();
                 await window.mergeGuestCartIntoFirebase();
@@ -2171,6 +2213,16 @@
             document.getElementById('resetMessage').innerHTML = '';
             document.getElementById('resetEmail').value = '';
             document.getElementById('passwordResetModal').style.display = 'flex';
+        };
+
+        window.resendVerificationEmail = async function() {
+            if (!auth || !auth.currentUser) { window.showToast('Please sign in first', 'error'); return; }
+            try {
+                await auth.currentUser.sendEmailVerification();
+                window.showToast('Verification email sent! Please check your inbox.', 'success');
+            } catch(e) {
+                window.showToast('Failed to send verification email', 'error');
+            }
         };
 
         window.closePasswordResetModal = function() { 
@@ -2905,41 +2957,6 @@
             }
         };
 
-        // ----- FAQ -----
-        window.toggleFaq = function(element) {
-            const answer = element.nextElementSibling;
-            const icon = element.querySelector('i');
-            if (answer.classList.contains('open')) {
-                answer.classList.remove('open');
-                icon.className = 'fas fa-chevron-down';
-            } else {
-                answer.classList.add('open');
-                icon.className = 'fas fa-chevron-up';
-            }
-        };
-
-        function renderFaqs(faqs) {
-            const container = document.getElementById('faqContainer');
-            const section = document.getElementById('faqSection');
-            if (!container || !section) return;
-            
-            if (!faqs || faqs.length === 0) {
-                section.style.display = 'none';
-                return;
-            }
-            
-            section.style.display = 'block';
-            container.innerHTML = faqs.map(faq => `
-                <div class="faq-item">
-                    <div class="faq-question" onclick="window.toggleFaq(this)">
-                        <span>${window.escapeHtml(faq.question)}</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="faq-answer">${window.escapeHtml(faq.answer)}</div>
-                </div>
-            `).join('');
-        }
-
         window.openContact = function(type) {
             const phone = document.getElementById('footerPhone').textContent;
             const email = document.getElementById('footerEmail').textContent;
@@ -3108,31 +3125,30 @@
             const heartClass = inWishlist ? 'fas fa-heart' : 'far fa-heart';
             const heartColor = inWishlist ? 'color:#ff4757;' : '';
             
-            // Calculate rating
-            const rating = product.rating || 0;
-            const ratingStars = rating > 0 ? `
-                <div class="product-rating" style="color: #ffc107; font-size: 0.8rem; margin-bottom: 0.2rem;">
-                    ${'★'.repeat(Math.floor(rating))}${'☆'.repeat(5 - Math.floor(rating))}
-                    <span style="color: #999; font-size: 0.7rem;">(${rating.toFixed(1)})</span>
+            const rating = product.average_rating || product.rating || 0;
+            const reviewCount = product.review_count || 0;
+            const filledStars = Math.floor(rating);
+            const hasHalfStar = rating - filledStars >= 0.5;
+            const emptyStars = 5 - filledStars - (hasHalfStar ? 1 : 0);
+            const ratingDisplay = rating > 0 ? `
+                <div class="product-rating">
+                    <i class="fas fa-star"></i>${filledStars > 0 ? '' : '<i class="far fa-star"></i>'}
+                    ${rating.toFixed(1)}
+                    <span class="review-count">(${reviewCount})</span>
                 </div>
-            ` : '';
-            
-            // Check if in compare list
-            const inCompare = (compareList || []).find(i => String(i.id) === String(product.id));
+            ` : '<div class="product-rating" style="color:#ddd; font-size:11px;">No reviews</div>';
             
             return `
                 <div class="product-card" onclick="window.location.href='product.html?id=${product.id}'" data-product-id="${product.id}">
                     ${discountBadge}
+                    <img src="${product.image_url || product.image_urls?.[0] || 'https://via.placeholder.com/300'}" loading="lazy" decoding="async" class="product-image" alt="${window.escapeHtml(product.name)}">
                     <div class="wishlist-btn" data-id="${product.id}" onclick="event.stopPropagation(); window.toggleWishlist('${product.id}');" title="Wishlist">
                         <i class="${heartClass}" style="${heartColor}"></i>
                     </div>
-                    <div class="compare-btn" data-id="${product.id}" onclick="event.stopPropagation(); window.toggleCompare('${product.id}');" title="Compare" style="position: absolute; top: 44px; left: 8px; background: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.12); z-index: 10;">
-                        <i class="fas fa-balance-scale" style="font-size: 0.9rem; color: ${inCompare ? '#667eea' : '#999'};"></i>
-                    </div>
-                    <img src="${product.image_url || 'https://via.placeholder.com/150'}" loading="lazy" decoding="async" class="product-image" alt="${window.escapeHtml(product.name)}">
                     <div class="product-info">
+                        <div class="product-brand">${window.escapeHtml((product.brand || product.category || 'General').toUpperCase())}</div>
                         <div class="product-name">${window.escapeHtml(product.name)}</div>
-                        ${ratingStars}
+                        ${ratingDisplay}
                         ${priceDisplay}
                     </div>
                 </div>
@@ -3354,7 +3370,7 @@
                 console.error('Database not initialized');
                 return;
             }
-            const grid = document.getElementById('productsGrid');
+            const grid = document.getElementById('productsRoll');
             if (grid) grid.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
             try {
                 // Try to get from cache first (with fallback)
@@ -3416,7 +3432,7 @@
                 startDiscountTimer();
             } catch (error) {
                 console.error('Error fetching fresh products:', error);
-                const grid = document.getElementById('productsGrid');
+                const grid = document.getElementById('productsRoll');
                 if (grid) grid.innerHTML = '<div style="text-align:center; padding:2rem; color:red;">Failed to load products. Please refresh the page.</div>';
             }
         }
@@ -3503,9 +3519,6 @@
                 const telegram = document.getElementById('footerTelegram');
                 if (telegram) telegram.textContent = config.contactTelegram;
             }
-            if (config.faqs && Array.isArray(config.faqs)) {
-                renderFaqs(config.faqs);
-            }
             
             // Load adverts
             loadAdverts(config);
@@ -3551,6 +3564,10 @@
                 await window.loadCartFromFirebase();
                 await window.loadRecentlyViewedFromFirebase();
                 window.updateCartCount();
+                if (currentUser && !user.emailVerified) {
+                    const banner = document.getElementById('emailVerificationBanner');
+                    if (banner) banner.style.display = 'block';
+                }
             } catch (error) {
                 console.error('Auth state error:', error);
             }
@@ -3563,6 +3580,9 @@
         document.getElementById('searchInput').addEventListener('input', function() {
             clearTimeout(renderTimeout);
             renderTimeout = setTimeout(window.renderProducts, 300);
+        });
+        document.getElementById('customerPassword').addEventListener('input', function() {
+            window.checkPasswordStrength(this.value);
         });
 
         (async function init() {

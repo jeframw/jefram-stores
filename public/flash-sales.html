@@ -25,28 +25,26 @@
         .flash-info { background: linear-gradient(135deg, rgba(255, 71, 87, 0.1), rgba(255, 107, 129, 0.1)); padding: 1rem; border-radius: 12px; margin-bottom: 2rem; border-left: 4px solid #ff4757; }
         .flash-info p { color: #666; font-size: 0.95rem; }
 
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1.2rem; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.2rem; }
         .product-card { 
-            background: white; border-radius: 14px; overflow: hidden; 
-            transition: all 0.3s ease; box-shadow: 0 2px 12px rgba(0,0,0,0.08); 
-            position: relative; cursor: pointer; border: 2px solid transparent;
+            background: white; border-radius: 10px; overflow: hidden; 
+            box-shadow: 0 1px 6px rgba(0,0,0,0.08); 
+            position: relative; cursor: pointer; display: flex; flex-direction: column; height: 100%;
         }
-        .product-card:hover { 
-            transform: translateY(-6px); 
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15); 
-            border-color: #ff4757;
-        }
-        .product-image { width: 100%; height: 110px; object-fit: contain; background: #f9f9f9; padding: 8px; }
-        .product-info { padding: 10px; }
-        .product-info .product-name { font-size: 12px; line-height: 1.3; margin-bottom: 0.4rem; font-weight: 600; color: #333; }
-        .product-price { font-size: 13px; font-weight: 700; color: #28a745; margin-bottom: 0.1rem; }
+        .product-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+        .product-image { width: 100%; height: 180px; object-fit: contain; background: #fafafa; display: block; padding: 10px; }
+        .product-info { padding: 10px; flex: 1; display: flex; flex-direction: column; }
+        .product-brand { font-size: 10px; color: #999; text-transform: uppercase; margin-bottom: 2px; font-weight: 600; }
+        .product-name { font-size: 12px; line-height: 1.3; margin-bottom: 4px; font-weight: 600; color: #333; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .product-rating { font-size: 11px; color: #ffc107; margin-bottom: 4px; display: flex; align-items: center; gap: 2px; }
+        .product-rating .review-count { color: #999; font-size: 10px; }
+        .product-price { font-size: 14px; font-weight: 700; margin-bottom: 2px; color: #333; }
+        .product-old-price { font-size: 11px; color: #999; text-decoration: line-through; margin-bottom: 4px; }
         .discount-badge { 
-            position: absolute; top: 10px; right: 10px; 
-            background: linear-gradient(135deg, #ff4757, #ff6b81); 
-            color: white; padding: 4px 10px; border-radius: 6px; 
-            font-size: 11px; font-weight: bold; 
-            box-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);
-            animation: scaleIn 0.3s ease;
+            position: absolute; top: 8px; left: 8px; 
+            background: #ff6b00; 
+            color: white; padding: 2px 6px; border-radius: 4px; 
+            font-size: 10px; font-weight: bold; 
         }
         @keyframes scaleIn { 
             from { transform: scale(0.5); opacity: 0; } 
@@ -96,7 +94,8 @@
         {
             "imports": {
                 "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
+                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
+                "firebase/app-check": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js"
             }
         }
     </script>
@@ -104,6 +103,7 @@
     <script type="module">
         import { initializeApp } from "firebase/app";
         import { getFirestore, collection, getDocs, doc, getDoc, onSnapshot } from "firebase/firestore";
+        import { initializeAppCheck, RecaptchaV3Provider } from "firebase/app-check";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAoNFbS548PhPO1XmfXfDBiSfHzJ5WRvDY",
@@ -118,6 +118,7 @@
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
+            initializeAppCheck(app, { provider: new RecaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
         } catch (error) {
             console.error('Firebase initialization error:', error);
             document.getElementById('productsGrid').innerHTML = '<div class="no-products">Failed to load products. Please refresh the page.</div>';
@@ -139,21 +140,31 @@
             const discountedPrice = Math.floor(originalPrice * (1 - discount / 100));
             const itemsLeft = flashSaleProductData?.itemsLeft || 0;
             const discountBadge = discount > 0 ? `<div class="discount-badge">-${discount}%</div>` : '';
-            const itemsLeftHtml = itemsLeft > 0 ? `<div style="font-size: 9px; color: #ff4757; font-weight: bold; margin-top: 3px;">📦 ${itemsLeft} left</div>` : '<div style="font-size: 9px; color: #999; font-weight: bold; margin-top: 3px;">📦 Sold Out</div>';
+            const itemsLeftHtml = itemsLeft > 0 ? `<div style="font-size: 9px; color: #ff6b00; font-weight: bold; margin-top: 3px;">📦 ${itemsLeft} left</div>` : '<div style="font-size: 9px; color: #999; font-weight: bold; margin-top: 3px;">📦 Sold Out</div>';
+            const rating = product.average_rating || product.rating || 0;
+            const reviewCount = product.review_count || 0;
+            const ratingDisplay = rating > 0 ? `
+                <div class="product-rating">
+                    <i class="fas fa-star"></i>${Math.floor(rating)}
+                    <span class="review-count">(${reviewCount})</span>
+                </div>
+            ` : '<div class="product-rating" style="color:#ddd; font-size:11px;">No reviews</div>';
 
             return `
                 <div class="product-card" onclick="window.location.href='product.html?id=${product.id}'">
                     ${discountBadge}
-                    <img src="${product.image_url || 'https://via.placeholder.com/150'}" loading="lazy" class="product-image" alt="${escapeHtml(product.name)}">
+                    <img src="${product.image_url || 'https://via.placeholder.com/300'}" loading="lazy" class="product-image" alt="${escapeHtml(product.name)}">
                     <div class="product-info">
+                        <div class="product-brand">${escapeHtml((product.brand || product.category || 'General').toUpperCase())}</div>
                         <div class="product-name">${escapeHtml(product.name)}</div>
+                        ${ratingDisplay}
                         <div style="display: flex; gap: 6px; margin-bottom: 0.3rem; align-items: center;">
                             <div class="product-price">UGX ${discountedPrice.toLocaleString()}</div>
-                            ${discount > 0 ? `<div style="font-size: 9px; color: #999; text-decoration: line-through;">UGX ${originalPrice.toLocaleString()}</div>` : ''}
+                            ${discount > 0 ? `<div class="product-old-price">UGX ${originalPrice.toLocaleString()}</div>` : ''}
                         </div>
                         ${itemsLeftHtml}
-                        <button class="add-to-cart-button" onclick="event.stopPropagation(); window.addToCart('${product.id}')" style="margin-top: 0.75rem; width:100%; padding: 0.65rem 0.8rem; background:#667eea; color:#fff; border:none; border-radius:8px; cursor:pointer;">
-                            Add to cart
+                        <button class="add-to-cart-button" onclick="event.stopPropagation(); window.addToCart('${product.id}')" style="margin-top: auto; width:100%; padding: 0.6rem; background:#667eea; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600;">
+                            <i class="fas fa-shopping-cart"></i> Add to cart
                         </button>
                     </div>
                 </div>

@@ -60,7 +60,8 @@
         {
             "imports": {
                 "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
+                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
+                "firebase/app-check": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js"
             }
         }
     </script>
@@ -68,6 +69,7 @@
     <script type="module">
         import { initializeApp } from "firebase/app";
         import { getFirestore, doc, getDoc, onSnapshot } from "firebase/firestore";
+        import { initializeAppCheck, RecaptchaV3Provider } from "firebase/app-check";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAoNFbS548PhPO1XmfXfDBiSfHzJ5WRvDY",
@@ -82,6 +84,7 @@
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
+            initializeAppCheck(app, { provider: new RecaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
         } catch (error) {
             console.error('Firebase initialization error:', error);
             document.getElementById('faqContainer').innerHTML = '<div class="no-faqs">Failed to load FAQs. Please refresh the page.</div>';

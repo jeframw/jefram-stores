@@ -1421,17 +1421,19 @@ label { color: var(--text); }
 </div>
 <script type="importmap">
 {
-"imports": {
- "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
- "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
- "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
-}
+ "imports": {
+  "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+  "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
+  "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
+  "firebase/app-check": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js"
+ }
 }
 </script>
 <script type="module">
 import { initializeApp, deleteApp } from "firebase/app";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, orderBy, getDoc, setDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "firebase/auth";
+import { initializeAppCheck, RecaptchaV3Provider } from "firebase/app-check";
 
 const firebaseConfig = {
 apiKey: "AIzaSyAoNFbS548PhPO1XmfXfDBiSfHzJ5WRvDY",
@@ -1445,6 +1447,7 @@ appId: "1:669495715459:web:1d6bedbba9dc27cf8e1db6"
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+initializeAppCheck(app, { provider: new RecaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
 
 // ===== TOAST NOTIFICATION FUNCTION =====
 window.showToast = function(message, type = 'success') {
