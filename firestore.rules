@@ -2,99 +2,83 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ===== HELPERS =====
-    // An admin is a Firebase Auth user whose UID also exists in /admins/{uid}.
     function isAdmin(uid) {
       return exists(/databases/$(database)/documents/admins/$(uid));
     }
 
-    // True when the order (by id) belongs to the given Firebase Auth uid.
-    // Orders embed customer.phone; we match on the customer doc keyed by uid
-    // (customers/{uid}) which keeps the phone in sync.
     function isOrderOwner(orderId, uid) {
       let orderPhone = get(/databases/$(database)/documents/orders/$(orderId)).data.customer.phone;
       let customerPhone = get(/databases/$(database)/documents/customers/$(uid)).data.phone;
       return orderPhone != null && customerPhone != null && orderPhone == customerPhone;
     }
 
-    // ===== CONFIG =====
     match /config/{document} {
       allow read: if true;
-      // Admin-only writes (the storefront only reads config).
       allow write: if request.auth != null && isAdmin(request.auth.uid);
     }
 
-    // ===== PRODUCTS =====
     match /products/{productId} {
       allow read: if true;
-      // NOTE: the storefront updates stock client-side on checkout, so product
-      // writes must stay open to signed-in users. Tighten via a Cloud Function
-      // if stock updates are moved server-side.
-      allow write: if true;
+      allow create: if request.auth != null && request.app != null && request.app.token.is_verified == true && isAdmin(request.auth.uid);
+      allow update: if request.auth != null && request.app != null && request.app.token.is_verified == true && (
+        isAdmin(request.auth.uid) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'sizes', 'discount_percent']) &&
+         request.resource.data.stock is int &&
+         request.resource.data.stock >= 0 &&
+         request.resource.data.stock <= resource.data.stock &&
+         request.resource.data.price is int &&
+         request.resource.data.price >= 0)
+      );
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
     }
 
-    // ===== CATEGORIES =====
     match /categories/{categoryId} {
       allow read: if true;
       allow write: if request.auth != null && isAdmin(request.auth.uid);
     }
 
-    // ===== COUPONS =====
     match /coupons/{couponId} {
       allow read: if true;
-      // NOTE: the storefront increments usedCount client-side on checkout, so
-      // coupon writes must stay open to signed-in users.
-      allow write: if true;
+      allow create: if request.auth != null && isAdmin(request.auth.uid);
+      allow update: if request.auth != null && (
+        isAdmin(request.auth.uid) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']) &&
+         request.resource.data.usedCount is int &&
+         request.resource.data.usedCount >= resource.data.usedCount)
+      );
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
     }
 
-    // ===== ADMINS (Firebase Auth uid = document id) =====
     match /admins/{adminId} {
-      // Only existing admins may read the admin list; login verifies the
-      // signed-in user has a matching admins/{uid} doc.
       allow read: if request.auth != null && isAdmin(request.auth.uid);
-      // Allow self-registration or creation by existing admins.
-      allow create: if request.auth != null && 
-                    (request.auth.uid == adminId || isAdmin(request.auth.uid));
+      allow create: if request.auth != null && (request.auth.uid == adminId || isAdmin(request.auth.uid));
       allow update, delete: if false;
     }
 
-    // ===== ADMIN USERS (staff directory, display only) =====
     match /admin_users/{id} {
       allow read, write: if request.auth != null && isAdmin(request.auth.uid);
     }
 
-    // ===== DELIVERY AGENTS =====
     match /delivery_agents/{agentId} {
       allow read, write: if request.auth != null && isAdmin(request.auth.uid);
     }
 
-    // ===== CUSTOMERS (Firebase Auth uid = document id) =====
     match /customers/{customerId} {
-      allow read: if request.auth != null &&
-                  (request.auth.uid == customerId || isAdmin(request.auth.uid));
-      // Customers edit only their own profile; admins may edit any.
-      allow update: if request.auth != null &&
-                        (request.auth.uid == customerId || isAdmin(request.auth.uid));
-      // Registration: a signed-in user creates their own profile doc (uid == id).
+      allow read: if request.auth != null && (request.auth.uid == customerId || isAdmin(request.auth.uid));
+      allow update: if request.auth != null && (request.auth.uid == customerId || isAdmin(request.auth.uid));
       allow create: if request.auth != null && request.auth.uid == customerId;
       allow delete: if false;
     }
 
-    // ===== ORDERS =====
     match /orders/{orderId} {
-      // Single-document reads are gated by ownership so a customer cannot
-      // open another customer's order by document ID.
-      allow get: if request.auth != null &&
-                  (isOrderOwner(orderId, request.auth.uid) || isAdmin(request.auth.uid));
-      // Collection/list queries are allowed for any signed-in user because
-      // the client always filters by customer.phone, which limits results
-      // to that user's orders.
-      allow list: if request.auth != null;
-      // Customers create their own orders.
-      allow create: if request.auth != null;
-      // Admins may update any order field. Customers may update ONLY their own
-      // rating fields (product_rating, delivery_rating, rating_comment,
-      // rated_at) once delivered, or cancel their own order (status -> 'cancelled').
+      allow get: if request.auth != null && (isOrderOwner(orderId, request.auth.uid) || isAdmin(request.auth.uid));
+      allow list: if request.auth != null && request.query.limit <= 100;
+      allow create: if request.auth != null &&
+        request.resource.data.customerId == request.auth.uid &&
+        request.resource.data.customerId is string &&
+        request.resource.data.total is int &&
+        request.resource.data.total >= 0 &&
+        request.resource.data.status in ['pending', 'pending_payment', 'confirmed', 'on_way', 'delivered', 'cancelled'];
       allow update: if request.auth != null && (
         isAdmin(request.auth.uid) ||
         (isOrderOwner(orderId, request.auth.uid) &&
@@ -108,17 +92,15 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ===== REVIEWS =====
     match /reviews/{reviewId} {
       allow read: if true;
-      // Any signed-in user may post a review.
-      allow create: if request.auth != null;
-      // Authors may edit/delete only their own reviews.
-      allow update, delete: if request.auth != null &&
-                             request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null &&
+        request.resource.data.rating is int &&
+        request.resource.data.rating >= 1 &&
+        request.resource.data.rating <= 5;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
-    // ===== LEGACY / UNUSED COLLECTIONS (no longer used) =====
     match /password_resets/{resetId} {
       allow read, write: if false;
     }
