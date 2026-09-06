@@ -2,3 +2,7 @@ node_modules/
 .DS_Store
 *.log
 .firebase/
+.env
+jefram-stores-firebase-adminsdk-*.json
+.git-rewrite/
+.kilo/
