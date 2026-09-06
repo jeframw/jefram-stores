@@ -8,11 +8,12 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     firebase_uid VARCHAR(255) UNIQUE,
-    email VARCHAR(255) UNIQUE,
+    email VARCHAR(255) UNIQUE NOT NULL,
     phone VARCHAR(20) UNIQUE,
     name VARCHAR(255),
     address TEXT,
     role VARCHAR(20) DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'delivery_agent')),
+    password_hash TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -68,6 +69,13 @@ CREATE TABLE orders (
     rating_comment TEXT,
     rated_at TIMESTAMP,
     coupon_code VARCHAR(100),
+    payment_method VARCHAR(50),
+    mobile_money_number VARCHAR(20),
+    payment_screenshot TEXT,
+    order_notes TEXT,
+    tracking_number VARCHAR(255),
+    estimated_delivery_date DATE,
+    delivery_fee DECIMAL(10, 2) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

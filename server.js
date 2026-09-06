@@ -1,10 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 const pool = require('./db');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'random_secret_string_for_security_789';
 
 // Middleware
 app.use(cors({
@@ -12,8 +16,9 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use(express.static('public'));
 
-// Request logging middleware
+// Request logging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
@@ -24,12 +29,136 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', database: 'connected' });
 });
 
+// ==================== AUTH MIDDLEWARE ====================
+
+const authMiddleware = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+};
+
+const adminOnly = async (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+};
+
+const customerOnly = async (req, res, next) => {
+  if (req.user.role !== 'customer') {
+    return res.status(403).json({ error: 'Customer access required' });
+  }
+  next();
+};
+
+// ==================== AUTH ROUTES ====================
+
+// Admin login
+app.post('/api/auth/admin/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    const result = await pool.query('SELECT * FROM users WHERE email = $1 AND role = $2', [email, 'admin']);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    const admin = result.rows[0];
+    if (!admin.password_hash) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    const valid = await bcrypt.compare(password, admin.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    const token = jwt.sign({ id: admin.id, email: admin.email, role: admin.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: admin.id, email: admin.email, name: admin.name, role: admin.role } });
+  } catch (error) {
+    console.error('Admin login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Customer register
+app.post('/api/auth/customer/register', async (req, res) => {
+  try {
+    const { email, password, name, phone } = req.body;
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Name, email and password are required' });
+    }
+    const existing = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+    const password_hash = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      'INSERT INTO users (email, password_hash, name, phone, role) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [email, password_hash, name, phone || null, 'customer']
+    );
+    const token = jwt.sign({ id: result.rows[0].id, email, role: 'customer' }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token, user: result.rows[0] });
+  } catch (error) {
+    console.error('Customer register error:', error);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+// Customer login
+app.post('/api/auth/customer/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    const result = await pool.query('SELECT * FROM users WHERE email = $1 AND role = $2', [email, 'customer']);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    const customer = result.rows[0];
+    if (!customer.password_hash) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    const valid = await bcrypt.compare(password, customer.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    const token = jwt.sign({ id: customer.id, email: customer.email, role: customer.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: customer.id, email: customer.email, name: customer.name, phone: customer.phone } });
+  } catch (error) {
+    console.error('Customer login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Get current user
+app.get('/api/auth/me', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, email, name, phone, address, role FROM users WHERE id = $1', [req.user.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
 // ==================== PRODUCTS ====================
 
-// Get all products
 app.get('/api/products', async (req, res) => {
   try {
-    const { category, limit, featured, flash_sale } = req.query;
+    const { category, limit, featured, flash_sale, search } = req.query;
     let query = 'SELECT * FROM products WHERE 1=1';
     const params = [];
     let paramCount = 0;
@@ -48,6 +177,14 @@ app.get('/api/products', async (req, res) => {
       query += ' AND is_flash_sale = true';
     }
 
+    if (search) {
+      paramCount++;
+      query += ` AND (name ILIKE $${paramCount} OR description ILIKE $${paramCount})`;
+      params.push(`%${search}%`);
+    }
+
+    query += ' ORDER BY created_at DESC';
+
     if (limit) {
       paramCount++;
       query += ` LIMIT $${paramCount}`;
@@ -62,7 +199,6 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-// Get single product
 app.get('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -77,8 +213,7 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-// Create product (admin only)
-app.post('/api/products', async (req, res) => {
+app.post('/api/products', authMiddleware, adminOnly, async (req, res) => {
   try {
     const {
       name, description, price, old_price, stock, category_id,
@@ -89,7 +224,7 @@ app.post('/api/products', async (req, res) => {
       `INSERT INTO products (name, description, price, old_price, stock, category_id, brand, sizes, image_urls, discount_percent, is_featured, is_flash_sale)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
-      [name, description, price, old_price, stock, category_id, brand, JSON.stringify(sizes), JSON.stringify(image_urls), discount_percent, is_featured, is_flash_sale]
+      [name, description, price, old_price, stock, category_id, brand, JSON.stringify(sizes || []), JSON.stringify(image_urls || []), discount_percent, is_featured, is_flash_sale]
     );
 
     res.status(201).json(result.rows[0]);
@@ -99,8 +234,7 @@ app.post('/api/products', async (req, res) => {
   }
 });
 
-// Update product
-app.put('/api/products/:id', async (req, res) => {
+app.put('/api/products/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -115,7 +249,7 @@ app.put('/api/products/:id', async (req, res) => {
            discount_percent = $10, is_featured = $11, is_flash_sale = $12
        WHERE id = $13
        RETURNING *`,
-      [name, description, price, old_price, stock, category_id, brand, JSON.stringify(sizes), JSON.stringify(image_urls), discount_percent, is_featured, is_flash_sale, id]
+      [name, description, price, old_price, stock, category_id, brand, JSON.stringify(sizes || []), JSON.stringify(image_urls || []), discount_percent, is_featured, is_flash_sale, id]
     );
 
     if (result.rows.length === 0) {
@@ -129,8 +263,7 @@ app.put('/api/products/:id', async (req, res) => {
   }
 });
 
-// Delete product
-app.delete('/api/products/:id', async (req, res) => {
+app.delete('/api/products/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING *', [id]);
@@ -146,7 +279,6 @@ app.delete('/api/products/:id', async (req, res) => {
 
 // ==================== CATEGORIES ====================
 
-// Get all categories
 app.get('/api/categories', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM categories ORDER BY name');
@@ -157,8 +289,7 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
-// Create category
-app.post('/api/categories', async (req, res) => {
+app.post('/api/categories', authMiddleware, adminOnly, async (req, res) => {
   try {
     const { name, description } = req.body;
     const result = await pool.query(
@@ -174,50 +305,57 @@ app.post('/api/categories', async (req, res) => {
 
 // ==================== ORDERS ====================
 
-// Get orders by customer
-app.get('/api/orders', async (req, res) => {
+app.get('/api/orders', authMiddleware, async (req, res) => {
   try {
-    const { customer_id } = req.query;
-    if (!customer_id) {
-      return res.status(400).json({ error: 'customer_id is required' });
+    if (req.user.role === 'admin') {
+      const result = await pool.query(
+        `SELECT o.*, 
+                json_agg(json_build_object('id', oi.id, 'product_id', oi.product_id, 'product_name', oi.product_name, 'quantity', oi.quantity, 'price', oi.price, 'size', oi.size)) as items
+         FROM orders o
+         LEFT JOIN order_items oi ON o.id = oi.order_id
+         GROUP BY o.id
+         ORDER BY o.created_at DESC`
+      );
+      res.json(result.rows);
+    } else {
+      const result = await pool.query(
+        `SELECT o.*, 
+                json_agg(json_build_object('id', oi.id, 'product_id', oi.product_id, 'product_name', oi.product_name, 'quantity', oi.quantity, 'price', oi.price, 'size', oi.size)) as items
+         FROM orders o
+         LEFT JOIN order_items oi ON o.id = oi.order_id
+         WHERE o.customer_id = $1
+         GROUP BY o.id
+         ORDER BY o.created_at DESC`,
+        [req.user.id]
+      );
+      res.json(result.rows);
     }
-
-    const result = await pool.query(
-      `SELECT o.*, 
-              json_agg(json_build_object('id', oi.id, 'product_id', oi.product_id, 'product_name', oi.product_name, 'quantity', oi.quantity, 'price', oi.price, 'size', oi.size)) as items
-       FROM orders o
-       LEFT JOIN order_items oi ON o.id = oi.order_id
-       WHERE o.customer_id = $1
-       GROUP BY o.id
-       ORDER BY o.created_at DESC`,
-      [customer_id]
-    );
-
-    res.json(result.rows);
   } catch (error) {
     console.error('Error fetching orders:', error);
     res.status(500).json({ error: 'Failed to fetch orders' });
   }
 });
 
-// Get single order
-app.get('/api/orders/:id', async (req, res) => {
+app.get('/api/orders/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      `SELECT o.*, 
-              json_agg(json_build_object('id', oi.id, 'product_id', oi.product_id, 'product_name', oi.product_name, 'quantity', oi.quantity, 'price', oi.price, 'size', oi.size)) as items
-       FROM orders o
-       LEFT JOIN order_items oi ON o.id = oi.order_id
-       WHERE o.id = $1
-       GROUP BY o.id`,
-      [id]
-    );
+    let query = `SELECT o.*, 
+            json_agg(json_build_object('id', oi.id, 'product_id', oi.product_id, 'product_name', oi.product_name, 'quantity', oi.quantity, 'price', oi.price, 'size', oi.size)) as items
+     FROM orders o
+     LEFT JOIN order_items oi ON o.id = oi.order_id
+     WHERE o.id = $1
+     GROUP BY o.id`;
+    
+    const params = [id];
+    if (req.user.role !== 'admin') {
+      query += ' AND o.customer_id = $2';
+      params.push(req.user.id);
+    }
 
+    const result = await pool.query(query, params);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Order not found' });
     }
-
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error fetching order:', error);
@@ -225,28 +363,26 @@ app.get('/api/orders/:id', async (req, res) => {
   }
 });
 
-// Create order
-app.post('/api/orders', async (req, res) => {
+app.post('/api/orders', authMiddleware, customerOnly, async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
     const {
-      customer_id, order_number, total, subtotal, shipping, discount,
+      total, subtotal, shipping, discount,
       status, customer_name, customer_phone, customer_address, customer_city,
-      coupon_code, items
+      coupon_code, items, payment_method, mobile_money_number, payment_screenshot, order_notes
     } = req.body;
 
     const orderResult = await client.query(
-      `INSERT INTO orders (customer_id, order_number, total, subtotal, shipping, discount, status, customer_name, customer_phone, customer_address, customer_city, coupon_code)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      `INSERT INTO orders (customer_id, total, subtotal, shipping, discount, status, customer_name, customer_phone, customer_address, customer_city, coupon_code, payment_method, mobile_money_number, payment_screenshot, order_notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        RETURNING *`,
-      [customer_id, order_number, total, subtotal, shipping, discount, status, customer_name, customer_phone, customer_address, customer_city, coupon_code]
+      [req.user.id, total, subtotal, shipping, discount, status || 'pending', customer_name, customer_phone, customer_address, customer_city, coupon_code, payment_method, mobile_money_number, payment_screenshot, order_notes]
     );
 
     const orderId = orderResult.rows[0].id;
 
-    // Insert order items
     for (const item of items) {
       await client.query(
         `INSERT INTO order_items (order_id, product_id, product_name, quantity, price, size)
@@ -266,8 +402,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// Update order status
-app.put('/api/orders/:id/status', async (req, res) => {
+app.put('/api/orders/:id/status', authMiddleware, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -288,8 +423,7 @@ app.put('/api/orders/:id/status', async (req, res) => {
   }
 });
 
-// Rate order
-app.put('/api/orders/:id/rating', async (req, res) => {
+app.put('/api/orders/:id/rating', authMiddleware, customerOnly, async (req, res) => {
   try {
     const { id } = req.params;
     const { product_rating, delivery_rating, rating_comment } = req.body;
@@ -297,9 +431,9 @@ app.put('/api/orders/:id/rating', async (req, res) => {
     const result = await pool.query(
       `UPDATE orders 
        SET product_rating = $1, delivery_rating = $2, rating_comment = $3, rated_at = CURRENT_TIMESTAMP
-       WHERE id = $4
+       WHERE id = $4 AND customer_id = $5
        RETURNING *`,
-      [product_rating, delivery_rating, rating_comment, id]
+      [product_rating, delivery_rating, rating_comment, id, req.user.id]
     );
 
     if (result.rows.length === 0) {
@@ -315,7 +449,6 @@ app.put('/api/orders/:id/rating', async (req, res) => {
 
 // ==================== REVIEWS ====================
 
-// Get reviews for a product
 app.get('/api/reviews', async (req, res) => {
   try {
     const { product_id } = req.query;
@@ -337,10 +470,10 @@ app.get('/api/reviews', async (req, res) => {
   }
 });
 
-// Create review
-app.post('/api/reviews', async (req, res) => {
+app.post('/api/reviews', authMiddleware, async (req, res) => {
   try {
-    const { product_id, product_name, user_id, rating, comment } = req.body;
+    const { product_id, product_name, rating, comment } = req.body;
+    const user_id = req.user.id;
 
     const result = await pool.query(
       `INSERT INTO reviews (product_id, product_name, user_id, rating, comment)
@@ -349,15 +482,14 @@ app.post('/api/reviews', async (req, res) => {
       [product_id, product_name, user_id, rating, comment]
     );
 
-    // Update product rating
     await pool.query(
       `UPDATE products 
        SET average_rating = (
-           SELECT AVG(rating) FROM reviews WHERE product_id = $1
-         ),
-         review_count = (
-           SELECT COUNT(*) FROM reviews WHERE product_id = $1
-         )
+          SELECT AVG(rating) FROM reviews WHERE product_id = $1
+        ),
+        review_count = (
+          SELECT COUNT(*) FROM reviews WHERE product_id = $1
+        )
        WHERE id = $1`,
       [product_id]
     );
@@ -371,7 +503,6 @@ app.post('/api/reviews', async (req, res) => {
 
 // ==================== COUPONS ====================
 
-// Get active coupons
 app.get('/api/coupons', async (req, res) => {
   try {
     const { code, active } = req.query;
@@ -397,8 +528,7 @@ app.get('/api/coupons', async (req, res) => {
   }
 });
 
-// Create coupon
-app.post('/api/coupons', async (req, res) => {
+app.post('/api/coupons', authMiddleware, adminOnly, async (req, res) => {
   try {
     const { code, discount_percent, discount_fixed, active, max_uses, valid_from, valid_until } = req.body;
 
@@ -416,8 +546,7 @@ app.post('/api/coupons', async (req, res) => {
   }
 });
 
-// Update coupon usage
-app.put('/api/coupons/:id/usage', async (req, res) => {
+app.put('/api/coupons/:id/usage', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
@@ -436,67 +565,8 @@ app.put('/api/coupons/:id/usage', async (req, res) => {
   }
 });
 
-// ==================== USERS ====================
-
-// Get user by Firebase UID
-app.get('/api/users/firebase/:firebase_uid', async (req, res) => {
-  try {
-    const { firebase_uid } = req.params;
-    const result = await pool.query('SELECT * FROM users WHERE firebase_uid = $1', [firebase_uid]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    res.status(500).json({ error: 'Failed to fetch user' });
-  }
-});
-
-// Create user
-app.post('/api/users', async (req, res) => {
-  try {
-    const { firebase_uid, email, phone, name, address, role } = req.body;
-
-    const result = await pool.query(
-      `INSERT INTO users (firebase_uid, email, phone, name, address, role)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [firebase_uid, email, phone, name, address, role || 'customer']
-    );
-
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error('Error creating user:', error);
-    res.status(500).json({ error: 'Failed to create user' });
-  }
-});
-
-// Update user
-app.put('/api/users/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { email, phone, name, address } = req.body;
-
-    const result = await pool.query(
-      `UPDATE users SET email = $1, phone = $2, name = $3, address = $4 WHERE id = $5 RETURNING *`,
-      [email, phone, name, address, id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error updating user:', error);
-    res.status(500).json({ error: 'Failed to update user' });
-  }
-});
-
 // ==================== CONFIG ====================
 
-// Get config
 app.get('/api/config/:key', async (req, res) => {
   try {
     const { key } = req.params;
@@ -511,8 +581,7 @@ app.get('/api/config/:key', async (req, res) => {
   }
 });
 
-// Update config
-app.put('/api/config/:key', async (req, res) => {
+app.put('/api/config/:key', authMiddleware, adminOnly, async (req, res) => {
   try {
     const { key } = req.params;
     const { value } = req.body;
@@ -533,14 +602,71 @@ app.put('/api/config/:key', async (req, res) => {
   }
 });
 
+// ==================== USERS ====================
+
+app.get('/api/users', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, email, name, phone, address, role, created_at FROM users ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+app.put('/api/users/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email, phone, name, address } = req.body;
+
+    if (req.user.role !== 'admin' && req.user.id !== id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const result = await pool.query(
+      'UPDATE users SET email = $1, phone = $2, name = $3, address = $4 WHERE id = $5 RETURNING *',
+      [email, phone, name, address, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// ==================== DASHBOARD STATS ====================
+
+app.get('/api/stats/overview', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const ordersResult = await pool.query('SELECT COUNT(*) as total_orders, SUM(total) as total_revenue FROM orders WHERE status = $1', ['delivered']);
+    const usersResult = await pool.query('SELECT COUNT(*) as total_users FROM users WHERE role = $1', ['customer']);
+    const productsResult = await pool.query('SELECT COUNT(*) as total_products FROM products');
+    const reviewsResult = await pool.query('SELECT COUNT(*) as total_reviews FROM reviews');
+
+    res.json({
+      totalOrders: parseInt(ordersResult.rows[0].total_orders) || 0,
+      totalRevenue: parseFloat(ordersResult.rows[0].total_revenue) || 0,
+      totalUsers: parseInt(usersResult.rows[0].total_users) || 0,
+      totalProducts: parseInt(productsResult.rows[0].total_products) || 0,
+      totalReviews: parseInt(reviewsResult.rows[0].total_reviews) || 0
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
 // ==================== ERROR HANDLING ====================
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal server error', message: err.message });
