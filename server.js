@@ -89,6 +89,84 @@ app.post('/api/auth/admin/login', async (req, res) => {
   }
 });
 
+// Initial admin setup (only works if no admin exists)
+app.post('/api/auth/admin/register', async (req, res) => {
+  try {
+    const existing = await pool.query('SELECT COUNT(*) FROM users WHERE role = $1', ['admin']);
+    if (parseInt(existing.rows[0].count) > 0) {
+      return res.status(403).json({ error: 'Admin already exists. Use the admin panel to create more admins.' });
+    }
+
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email and password are required' });
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, email, password_hash, 'admin']
+    );
+
+    const token = jwt.sign({ id: result.rows[0].id, email, role: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token, user: { id: result.rows[0].id, email, name, role: 'admin' } });
+  } catch (error) {
+    console.error('Admin register error:', error);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+// Admin create (master only)
+app.post('/api/auth/admin/create', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { username, email, password, role } = req.body;
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'Username, email and password are required' });
+    }
+    const existing = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+    const password_hash = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      'INSERT INTO users (email, password_hash, name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, name, role, created_at',
+      [email, password_hash, username, role || 'subadmin']
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Admin create error:', error);
+    res.status(500).json({ error: 'Failed to create admin' });
+  }
+});
+
+// Admin recover (master only - set password for existing admin user)
+app.post('/api/auth/admin/recover', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { uid, username, email, role } = req.body;
+    if (!uid || !username || !email) {
+      return res.status(400).json({ error: 'UID, username and email are required' });
+    }
+    const existing = await pool.query('SELECT * FROM users WHERE id = $1', [uid]);
+    let userId;
+    if (existing.rows.length > 0) {
+      await pool.query('UPDATE users SET name = $1, email = $2, role = $3 WHERE id = $4', [username, email, role || 'subadmin', uid]);
+      userId = uid;
+    } else {
+      const password_hash = await bcrypt.hash('changeme123', 10);
+      const result = await pool.query(
+        'INSERT INTO users (id, email, password_hash, name, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, name, role, created_at',
+        [uid, email, password_hash, username, role || 'subadmin']
+      );
+      userId = result.rows[0].id;
+    }
+    const result = await pool.query('SELECT id, email, name, role, created_at FROM users WHERE id = $1', [userId]);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Admin recover error:', error);
+    res.status(500).json({ error: 'Failed to recover admin' });
+  }
+});
+
 // Customer register
 app.post('/api/auth/customer/register', async (req, res) => {
   try {
@@ -639,6 +717,25 @@ app.put('/api/users/:id', authMiddleware, async (req, res) => {
   }
 });
 
+app.put('/api/users/:id/password', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body;
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    const password_hash = await bcrypt.hash(password, 10);
+    const result = await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2 RETURNING id, email, name, role', [password_hash, id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ ...result.rows[0], plainPassword: password });
+  } catch (error) {
+    console.error('Error updating password:', error);
+    res.status(500).json({ error: 'Failed to update password' });
+  }
+});
+
 // ==================== DASHBOARD STATS ====================
 
 app.get('/api/stats/overview', authMiddleware, adminOnly, async (req, res) => {
@@ -658,6 +755,168 @@ app.get('/api/stats/overview', authMiddleware, adminOnly, async (req, res) => {
   } catch (error) {
     console.error('Error fetching stats:', error);
     res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+// ==================== DELIVERY AGENTS ====================
+
+app.get('/api/delivery-agents', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM delivery_agents ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching delivery agents:', error);
+    res.status(500).json({ error: 'Failed to fetch delivery agents' });
+  }
+});
+
+app.post('/api/delivery-agents', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    const result = await pool.query(
+      'INSERT INTO delivery_agents (name, phone) VALUES ($1, $2) RETURNING *',
+      [name, phone]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating delivery agent:', error);
+    res.status(500).json({ error: 'Failed to create delivery agent' });
+  }
+});
+
+app.delete('/api/delivery-agents/:id', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM delivery_agents WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Delivery agent not found' });
+    }
+    res.json({ message: 'Delivery agent deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting delivery agent:', error);
+    res.status(500).json({ error: 'Failed to delete delivery agent' });
+  }
+});
+
+app.put('/api/orders/:id/assign-agent', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { delivery_agent_id } = req.body;
+    
+    let agentInfo = null;
+    if (delivery_agent_id) {
+      const agentResult = await pool.query('SELECT id, name, phone FROM delivery_agents WHERE id = $1', [delivery_agent_id]);
+      if (agentResult.rows.length > 0) {
+        agentInfo = agentResult.rows[0];
+      }
+    }
+    
+    const result = await pool.query(
+      'UPDATE orders SET delivery_agent = $1 WHERE id = $2 RETURNING *',
+      [agentInfo ? JSON.stringify(agentInfo) : null, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error assigning agent:', error);
+    res.status(500).json({ error: 'Failed to assign agent' });
+  }
+});
+
+// ==================== ORDERS EXTENDED ====================
+
+app.put('/api/orders/:id/delivery-fee', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { delivery_fee } = req.body;
+    const result = await pool.query('UPDATE orders SET delivery_fee = $1 WHERE id = $2 RETURNING *', [delivery_fee, id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating delivery fee:', error);
+    res.status(500).json({ error: 'Failed to update delivery fee' });
+  }
+});
+
+app.put('/api/orders/:id/tracking', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tracking_number } = req.body;
+    const result = await pool.query('UPDATE orders SET tracking_number = $1 WHERE id = $2 RETURNING *', [tracking_number, id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating tracking:', error);
+    res.status(500).json({ error: 'Failed to update tracking' });
+  }
+});
+
+app.put('/api/orders/:id/estimated-delivery', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estimated_delivery_date } = req.body;
+    const result = await pool.query('UPDATE orders SET estimated_delivery_date = $1 WHERE id = $2 RETURNING *', [estimated_delivery_date, id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating estimated delivery:', error);
+    res.status(500).json({ error: 'Failed to update estimated delivery' });
+  }
+});
+
+app.put('/api/orders/:id/approve-payment', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query("UPDATE orders SET status = 'pending' WHERE id = $1 RETURNING *", [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error approving payment:', error);
+    res.status(500).json({ error: 'Failed to approve payment' });
+  }
+});
+
+app.put('/api/orders/:id/reject-payment', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query("UPDATE orders SET status = 'cancelled' WHERE id = $1 RETURNING *", [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error rejecting payment:', error);
+    res.status(500).json({ error: 'Failed to reject payment' });
+  }
+});
+
+app.put('/api/orders/:id/response', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { admin_response } = req.body;
+    const result = await pool.query('UPDATE orders SET admin_response = $1 WHERE id = $2 RETURNING *', [admin_response, id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating response:', error);
+    res.status(500).json({ error: 'Failed to update response' });
+  }
+});
+
+app.put('/api/orders/:id/confirm', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, delivery_fee, estimated_delivery_date, tracking_number } = req.body;
+    const result = await pool.query(
+      `UPDATE orders SET status = $1, delivery_fee = $2, estimated_delivery_date = $3, tracking_number = $4 WHERE id = $5 RETURNING *`,
+      [status, delivery_fee, estimated_delivery_date, tracking_number, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error confirming order:', error);
+    res.status(500).json({ error: 'Failed to confirm order' });
   }
 });
 

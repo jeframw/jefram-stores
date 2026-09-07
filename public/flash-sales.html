@@ -50,7 +50,7 @@
         .add-to-cart-btn:hover { background: #d35400; }
         @keyframes scaleIn { 
             from { transform: scale(0.5); opacity: 0; } 
-            to { transform: scale(1); opacity: 1; } 
+            to { transform: scale(1); opacity: 1); 
         }
 
         .loader { text-align: center; padding: 3rem; }
@@ -92,39 +92,10 @@
         </div>
     </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
-                "firebase/app-check": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js"
-            }
-        }
-    </script>
-
-    <script type="module">
-        import { initializeApp } from "firebase/app";
-        import { getFirestore, collection, getDocs, doc, getDoc, onSnapshot } from "firebase/firestore";
-        import { initializeAppCheck, RecaptchaV3Provider } from "firebase/app-check";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAoNFbS548PhPO1XmfXfDBiSfHzJ5WRvDY",
-            authDomain: "jefram-stores.firebaseapp.com",
-            projectId: "jefram-stores",
-            storageBucket: "jefram-stores.firebasestorage.app",
-            messagingSenderId: "669495715459",
-            appId: "1:669495715459:web:1d6bedbba9dc27cf8e1db6"
-        };
-
-        let app, db, products = [];
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            initializeAppCheck(app, { provider: new RecaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
-        } catch (error) {
-            console.error('Firebase initialization error:', error);
-            document.getElementById('productsGrid').innerHTML = '<div class="no-products">Failed to load products. Please refresh the page.</div>';
-        }
+    <script src="../api.js"></script>
+    <script>
+        let products = [];
+        let currentFlashEvent = null;
 
         function escapeHtml(text) {
             if (!text) return '';
@@ -175,53 +146,45 @@
 
         async function loadFlashSales() {
             try {
-                const productsSnapshot = await getDocs(collection(db, 'products'));
-                products = [];
-                productsSnapshot.forEach((doc) => {
-                    products.push({ id: doc.id, ...doc.data() });
-                });
-
-                const configDoc = await getDoc(doc(db, 'config', 'store'));
-                if (configDoc.exists() && configDoc.data().currentFlashEvent) {
-                    const flashEvent = configDoc.data().currentFlashEvent;
-                    
-                    // Check if event is still active
-                    const endTime = typeof flashEvent.endTime === 'number' ? flashEvent.endTime : new Date(flashEvent.endTime).getTime();
-                    if (endTime <= Date.now()) {
-                        document.getElementById('productsGrid').innerHTML = '<div class="no-products">Flash sale has ended. Check back soon!</div>';
-                        return;
-                    }
-
-                    window.currentFlashEvent = flashEvent;
-                    
-                    // Get products in this flash event
-                    const flashProductIds = flashEvent.products.map(p => p.productId);
-                    const flashProducts = products.filter(p => flashProductIds.includes(p.id));
-
-                    if (flashProducts.length === 0) {
-                        document.getElementById('productsGrid').innerHTML = '<div class="no-products">No flash sale products available at the moment.</div>';
-                        return;
-                    }
-
-                    // Render cards with flash sale data
-                    const cardsHtml = flashProducts.map(product => {
-                        const flashData = flashEvent.products.find(p => p.productId === product.id);
-                        return renderProductCard(product, flashData);
-                    }).join('');
-                    
-                    document.getElementById('productsGrid').innerHTML = '<div class="products-grid">' + cardsHtml + '</div>';
-                    updateFlashTimer();
-                } else {
+                products = await JeframAPI.getProducts();
+                const config = await JeframAPI.getConfig('store');
+                const flashEvent = config.currentFlashEvent;
+                
+                if (!flashEvent) {
                     document.getElementById('productsGrid').innerHTML = '<div class="no-products">No active flash sale at the moment.</div>';
                     window.currentFlashEvent = null;
+                    return;
                 }
+
+                const endTime = typeof flashEvent.endTime === 'number' ? flashEvent.endTime : new Date(flashEvent.endTime).getTime();
+                if (endTime <= Date.now()) {
+                    document.getElementById('productsGrid').innerHTML = '<div class="no-products">Flash sale has ended. Check back soon!</div>';
+                    return;
+                }
+
+                window.currentFlashEvent = flashEvent;
+                
+                const flashProductIds = flashEvent.products.map(p => p.productId);
+                const flashProducts = products.filter(p => flashProductIds.includes(p.id));
+
+                if (flashProducts.length === 0) {
+                    document.getElementById('productsGrid').innerHTML = '<div class="no-products">No flash sale products available at the moment.</div>';
+                    return;
+                }
+
+                const cardsHtml = flashProducts.map(product => {
+                    const flashData = flashEvent.products.find(p => p.productId === product.id);
+                    return renderProductCard(product, flashData);
+                }).join('');
+                
+                document.getElementById('productsGrid').innerHTML = '<div class="products-grid">' + cardsHtml + '</div>';
+                updateFlashTimer();
             } catch (error) {
                 console.error('Error loading flash sales:', error);
                 document.getElementById('productsGrid').innerHTML = '<div class="no-products">Failed to load products. Please refresh the page.</div>';
             }
         }
 
-        // Flash sale timer - shows time until event ends
         function updateFlashTimer() {
             const timerDisplay = document.getElementById('flashTimerDisplay');
             if (!timerDisplay || !window.currentFlashEvent) {
@@ -241,6 +204,8 @@
                 if (window.currentFlashEvent) {
                     loadFlashSales();
                 }
+                return;
+            }
 
             const hours = Math.floor(diff / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -280,40 +245,9 @@
             alert('Added to cart!');
         };
 
-        if (db) {
-            loadFlashSales();
-            setInterval(updateFlashTimer, 1000);
-            updateFlashTimer();
-
-            // Real-time listener for flash sales event updates
-            const configRef = doc(db, 'config', 'store');
-            onSnapshot(configRef, (docSnapshot) => {
-                if (docSnapshot.exists()) {
-                    const flashEvent = docSnapshot.data().currentFlashEvent;
-                    
-                    if (flashEvent) {
-                        // Check if event ended
-                        const endTime = typeof flashEvent.endTime === 'number' ? flashEvent.endTime : new Date(flashEvent.endTime).getTime();
-                        if (endTime <= Date.now()) {
-                            loadFlashSales(); // Will show "Flash sale has ended"
-                            return;
-                        }
-                        
-                        // Update current event reference
-                        if (!window.currentFlashEvent || JSON.stringify(window.currentFlashEvent) !== JSON.stringify(flashEvent)) {
-                            window.currentFlashEvent = flashEvent;
-                            loadFlashSales(); // Reload to show updated items
-                        }
-                    } else {
-                        // No active event
-                        if (window.currentFlashEvent) {
-                            window.currentFlashEvent = null;
-                            loadFlashSales();
-                        }
-                    }
-                }
-            });
-        }
+        loadFlashSales();
+        setInterval(updateFlashTimer, 1000);
+        updateFlashTimer();
     </script>
 </body>
 </html>

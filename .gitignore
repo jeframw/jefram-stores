@@ -6,3 +6,6 @@ node_modules/
 jefram-stores-firebase-adminsdk-*.json
 .git-rewrite/
 .kilo/
+check-schema.js
+recover-admin.js
+run-migration.js

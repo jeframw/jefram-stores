@@ -131,26 +131,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-        import { initializeAppCheck, RecaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js';
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAoNFbS548PhPO1XmfXfDBiSfHzJ5WRvDY",
-            authDomain: "jefram-stores.firebaseapp.com",
-            projectId: "jefram-stores",
-            storageBucket: "jefram-stores.firebasestorage.app",
-            messagingSenderId: "669495715459",
-            appId: "1:669495715459:web:1d6bedbba9dc27cf8e1db6"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        initializeAppCheck(app, { provider: new RecaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
-
         async function loadTermsOfService() {
             try {
-                const configDoc = await getDoc(doc(db, 'config', 'store'));
+                const configDoc = await JeframAPI.getCurrentUser();
                 const contentDiv = document.getElementById('termsContent');
                 
                 if (configDoc.exists() && configDoc.data().termsOfService) {
@@ -190,5 +173,6 @@
 
         loadTermsOfService();
     </script>
+    <script src="../api.js"></script>
 </body>
 </html>

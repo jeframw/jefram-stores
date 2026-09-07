@@ -71,37 +71,8 @@
         </div>
     </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
-                "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
-                "firebase/app-check": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js"
-            }
-        }
-    </script>
-
+    <script src="../api.js"></script>
     <script type="module">
-        import { initializeApp } from "firebase/app";
-        import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
-        import { getAuth, onAuthStateChanged } from "firebase/auth";
-        import { initializeAppCheck, RecaptchaV3Provider } from "firebase/app-check";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAoNFbS548PhPO1XmfXfDBiSfHzJ5WRvDY",
-            authDomain: "jefram-stores.firebaseapp.com",
-            projectId: "jefram-stores",
-            storageBucket: "jefram-stores.firebasestorage.app",
-            messagingSenderId: "669495715459",
-            appId: "1:669495715459:web:1d6bedbba9dc27cf8e1db6"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        initializeAppCheck(app, { provider: new RecaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
-
         let product = null;
         let config = null;
         let reviews = [];
@@ -112,18 +83,23 @@
 
         // Replaces the old custom-session cookie lookup. Uses Firebase Auth so
         // the reviewer's name + uid are available for the reviews collection.
-        function subscribeCurrentUser() {
-            onAuthStateChanged(auth, async (user) => {
-                const nameEl = document.getElementById('reviewUserName');
-                if (!user) {
-                    currentUserName = 'Guest';
-                    currentUserId = null;
-                    if (nameEl) nameEl.textContent = currentUserName;
-                    return;
-                }
+        async function subscribeCurrentUser() {
+            try {
+                const user = await JeframAPI.getCurrentUser();
+                currentUserId = user.id;
+                currentUserName = user.name || user.email || "Guest";
+                const nameEl = document.getElementById("reviewUserName");
+                if (nameEl) nameEl.textContent = currentUserName;
+            } catch (e) {
+                currentUserName = "Guest";
+                currentUserId = null;
+                const nameEl = document.getElementById("reviewUserName");
+                if (nameEl) nameEl.textContent = currentUserName;
+            }
+        }
                 currentUserId = user.uid;
                 try {
-                    const snap = await getDoc(doc(db, 'customers', user.uid));
+                    const snap = await JeframAPI.getCurrentUser();
                     if (snap.exists() && snap.data().name) {
                         currentUserName = snap.data().name;
                     } else if (user.email) {
@@ -328,15 +304,11 @@
             }
 
             try {
-                const { addDoc, collection } = await import("firebase/firestore");
-                await addDoc(collection(db, 'reviews'), {
+                await JeframAPI.createReview({
                     productId: product.id,
                     productName: product.name,
-                    userId: currentUserId,
                     rating: selectedRating,
-                    userName: currentUserName,
-                    comment: comment,
-                    createdAt: new Date().toISOString()
+                    comment: comment
                 });
 
                 document.getElementById('reviewStatus').textContent = 'Review submitted successfully!';
@@ -452,20 +424,17 @@
             container.innerHTML = '<div class="loader">Loading product...</div>';
 
             try {
-                const productDoc = await getDoc(doc(db, 'products', productId));
+                const productDoc = await JeframAPI.getCurrentUser();
                 if (!productDoc.exists()) {
                     container.innerHTML = '<div class="loader">Product not found.</div>';
                     return;
                 }
 
                 product = { id: productDoc.id, ...productDoc.data() };
-                const configDoc = await getDoc(doc(db, 'config', 'store'));
+                const configDoc = await JeframAPI.getCurrentUser();
                 if (configDoc.exists()) config = configDoc.data();
 
-                const reviewQuery = query(collection(db, 'reviews'), where('productId', '==', productId));
-                const reviewSnapshot = await getDocs(reviewQuery);
-                reviews = [];
-                reviewSnapshot.forEach((docSnap) => reviews.push({ id: docSnap.id, ...docSnap.data() }));
+                const reviews = await JeframAPI.getReviews({ product_id: productId });
                 reviews.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
                 const images = getImages(product);
@@ -567,5 +536,6 @@
         updateCartCount();
         subscribeCurrentUser();
     </script>
+    <script src="../api.js"></script>
 </body>
 </html>

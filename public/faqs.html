@@ -56,36 +56,10 @@
         </div>
     </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
-                "firebase/app-check": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js"
-            }
-        }
-    </script>
-
     <script type="module">
-        import { initializeApp } from "firebase/app";
-        import { getFirestore, doc, getDoc, onSnapshot } from "firebase/firestore";
-        import { initializeAppCheck, RecaptchaV3Provider } from "firebase/app-check";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAoNFbS548PhPO1XmfXfDBiSfHzJ5WRvDY",
-            authDomain: "jefram-stores.firebaseapp.com",
-            projectId: "jefram-stores",
-            storageBucket: "jefram-stores.firebasestorage.app",
-            messagingSenderId: "669495715459",
-            appId: "1:669495715459:web:1d6bedbba9dc27cf8e1db6"
-        };
-
         let app, db;
         try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            initializeAppCheck(app, { provider: new RecaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
-        } catch (error) {
+            } catch (error) {
             console.error('Firebase initialization error:', error);
             document.getElementById('faqContainer').innerHTML = '<div class="no-faqs">Failed to load FAQs. Please refresh the page.</div>';
         }
@@ -124,12 +98,8 @@
             answer.classList.toggle('open');
         };
 
-        // Load FAQs from Firebase
-        if (db) {
-            onSnapshot(doc(db, 'config', 'store'), (doc) => {
-                if (doc.exists() && doc.data().faqs && Array.isArray(doc.data().faqs)) {
-                    renderFaqs(doc.data().faqs);
-                } else {
+                if (db) {
+            setInterval(() => loadData(), 5000) else {
                     document.getElementById('faqContainer').innerHTML = '<div class="no-faqs">No FAQs available at the moment.</div>';
                 }
             }, (error) => {
@@ -138,5 +108,6 @@
             });
         }
     </script>
+    <script src="../api.js"></script>
 </body>
 </html>

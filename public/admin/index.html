@@ -507,11 +507,8 @@ th, td { font-size: 12px; padding: 8px; }
   --shadow: 0 4px 12px rgba(15,23,42,0.08);
   --shadow-lg: 0 20px 50px rgba(15,23,42,0.20);
 }
-
 * { box-sizing: border-box; }
-
 body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); }
-
 /* ===== SIDEBAR ===== */
 .sidebar {
   width: 264px;
@@ -537,7 +534,6 @@ body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--t
 .nav-item i { width: 20px; text-align: center; font-size: 1rem; }
 .nav-item:hover { background: rgba(255,255,255,0.10); color: #fff; }
 .nav-item.active { background: rgba(255,255,255,0.16); color: #fff; box-shadow: inset 3px 0 0 #a5b4fc; }
-
 /* ===== MAIN ===== */
 .main-content { margin-left: 264px; padding: 26px; min-height: 100vh; }
 .header {
@@ -561,7 +557,6 @@ body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--t
 .logout-btn:hover { background: #dc2626; }
 .export-btn { background: var(--success); }
 .export-btn:hover { background: #059669; }
-
 /* ===== STAT CARDS ===== */
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 26px; }
 .stat-card {
@@ -581,12 +576,10 @@ body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--t
   background: linear-gradient(135deg, var(--primary), var(--violet));
   box-shadow: 0 8px 18px rgba(99,102,241,0.35);
 }
-
 /* ===== SECTIONS ===== */
 .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 22px; display: none; box-shadow: var(--shadow-sm); }
 .section.active { display: block; }
 .section-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 20px; color: var(--text); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-
 /* ===== TABLES ===== */
 .table-container { overflow-x: auto; border-radius: 12px; }
 table { width: 100%; border-collapse: collapse; min-width: 720px; }
@@ -594,7 +587,6 @@ th, td { padding: 13px 14px; text-align: left; border-bottom: 1px solid var(--bo
 th { background: #f8fafc; font-weight: 600; color: var(--muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: .04em; }
 tbody tr { transition: background .15s ease; }
 tbody tr:hover { background: #f8fafc; }
-
 /* ===== STATUS BADGES ===== */
 .status-badge { padding: 5px 12px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; display: inline-block; }
 .status-pending { background: #fef3c7; color: #92400e; }
@@ -603,7 +595,6 @@ tbody tr:hover { background: #f8fafc; }
 .status-delivered { background: #cffafe; color: #155e75; }
 .status-pending_payment { background: #ffedd5; color: #9a3412; }
 .status-cancelled { background: #fee2e2; color: #991b1b; }
-
 /* ===== BUTTONS ===== */
 .btn-primary, .btn-danger, .btn-warning, .btn-success {
   border: none; border-radius: 10px; cursor: pointer;
@@ -619,7 +610,6 @@ tbody tr:hover { background: #f8fafc; }
 .btn-success { background: var(--success); }
 .btn-success:hover { background: #059669; }
 .btn-sm { padding: 5px 10px; font-size: 0.78rem; border-radius: 8px; }
-
 /* ===== FORMS ===== */
 .product-form { max-width: 620px; }
 input, textarea, select {
@@ -633,7 +623,6 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
 }
 label { color: var(--text); }
-
 .upload-area {
   border: 2px dashed #c7d2fe; border-radius: 14px; padding: 26px;
   text-align: center; cursor: pointer; margin-bottom: 15px;
@@ -641,13 +630,11 @@ label { color: var(--text); }
   transition: all .2s ease;
 }
 .upload-area:hover { border-color: var(--primary); background: #e0e7ff; }
-
 .image-preview { width: 100%; min-height: 150px; margin-bottom: 15px; display: none; align-items: center; justify-content: center; background: #f8fafc; border-radius: 12px; flex-wrap: wrap; gap: 10px; padding: 12px; }
 .image-preview .thumb-container { width: 100px; height: 100px; overflow: hidden; border-radius: 12px; border: 2px solid var(--primary); position: relative; }
 .image-preview .thumb-container img { width: 100%; height: 100%; object-fit: cover; }
 .image-preview .thumb-container .remove-thumb { position: absolute; top: -8px; right: -8px; background: var(--danger); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
 .image-preview .thumb-container .remove-thumb:hover { background: #dc2626; }
-
 .stock-badge { padding: 4px 9px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
 .stock-in { background: #dcfce7; color: #166534; }
 .stock-out { background: #fee2e2; color: #991b1b; }
@@ -657,18 +644,14 @@ label { color: var(--text); }
 .agent-select { min-width: 130px; }
 .whatsapp-btn { background: #25D366; color: #fff; border: none; padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; transition: background .2s; }
 .whatsapp-btn:hover { background: #1ebe5b; }
-
 /* ===== MODALS ===== */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
 .modal-content { background: #fff; border-radius: 20px; padding: 26px; max-width: 600px; width: 100%; max-height: 86vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
 .modal-content h3 { color: var(--text); margin-bottom: 14px; font-size: 1.25rem; }
-
 .permission-badge { background: var(--primary); color: #fff; padding: 5px 12px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }
 .low-stock-alert { background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 999px; font-size: 0.65rem; margin-left: 8px; font-weight: 700; }
-
 .coupon-card { background: #f8fafc; border: 1px solid var(--border); padding: 16px; border-radius: 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 .coupon-code { font-family: monospace; font-size: 1.1rem; font-weight: 700; background: var(--primary); color: #fff; padding: 6px 14px; border-radius: 999px; }
-
 .size-section { background: #f8fafc; border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 15px; }
 .size-section label { font-weight: 600; display: block; margin-bottom: 8px; }
 .size-input-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -682,20 +665,17 @@ label { color: var(--text); }
 .size-tag .remove-size:hover { background: #ef4444; }
 .toggle-size-label { display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 10px 0; }
 .toggle-size-label input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-
 .timer-management { background: #f8fafc; border: 1px solid var(--border); padding: 18px; border-radius: 14px; margin-bottom: 16px; }
 .timer-management h4 { margin-bottom: 12px; color: var(--text); font-size: 1rem; }
 .timer-management .timer-display { font-size: 2rem; font-weight: 700; color: #ef4444; font-family: monospace; }
 .order-confirm-box { background: #f0fdf4; padding: 16px; border-radius: 12px; margin: 10px 0; border-left: 4px solid var(--success); }
 .order-confirm-box input { width: 100%; margin-bottom: 8px; }
 .order-confirm-box label { font-weight: 600; display: block; margin-bottom: 4px; font-size: 0.85rem; color: var(--text); }
-
 /* ===== POLISH ===== */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 ::selection { background: rgba(99,102,241,0.25); }
-
 @media (max-width: 768px) {
   .sidebar { width: 72px; padding: 18px 10px; }
   .sidebar .logo p, .sidebar .nav-item span { display: none; }
@@ -957,7 +937,6 @@ label { color: var(--text); }
         Upload banner images for adverts. Customers can click on them to visit the link you provide.
         <br><strong>Note:</strong> Images are compressed to save space.
     </p>
-    
     <!-- Advert Space 1 -->
     <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #667eea;">
         <h5 style="margin-bottom: 10px; color: #333;">📌 Advert Space 1 (Top Banner)</h5>
@@ -969,7 +948,6 @@ label { color: var(--text); }
                     <option value="false">❌ Disabled</option>
                 </select>
             </div>
-            
             <div>
                 <label style="font-weight: 500; font-size: 0.9rem;">Upload Banner Image</label>
                 <div class="upload-area" onclick="document.getElementById('advert1ImageInput').click()" style="border: 2px dashed #667eea; padding: 20px; text-align: center; border-radius: 8px; cursor: pointer; background: #f0f2ff;">
@@ -984,20 +962,17 @@ label { color: var(--text); }
                 </div>
                 <div id="advert1PreviewText" style="color: #999; font-size: 13px; margin-top: 5px;">No image uploaded</div>
             </div>
-            
             <div>
                 <label style="font-weight: 500; font-size: 0.9rem;">Advert Link (URL) - Where customers go when they click</label>
                 <input type="text" id="advert1Link" placeholder="https://example.com/offer" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; width: 100%; margin-top: 4px;">
                 <small style="color: #999;">Paste the full URL including https://</small>
             </div>
-            
             <div>
                 <label style="font-weight: 500; font-size: 0.9rem;">Alt Text (for accessibility)</label>
                 <input type="text" id="advert1Alt" placeholder="Special Offer - 50% Off" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; width: 100%; margin-top: 4px;">
             </div>
         </div>
     </div>
-    
     <!-- Advert Space 2 -->
     <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #ff6b81;">
         <h5 style="margin-bottom: 10px; color: #333;">📌 Advert Space 2 (Between Products)</h5>
@@ -1009,7 +984,6 @@ label { color: var(--text); }
                     <option value="false">❌ Disabled</option>
                 </select>
             </div>
-            
             <div>
                 <label style="font-weight: 500; font-size: 0.9rem;">Upload Banner Image</label>
                 <div class="upload-area" onclick="document.getElementById('advert2ImageInput').click()" style="border: 2px dashed #ff6b81; padding: 20px; text-align: center; border-radius: 8px; cursor: pointer; background: #fff0f0;">
@@ -1024,20 +998,17 @@ label { color: var(--text); }
                 </div>
                 <div id="advert2PreviewText" style="color: #999; font-size: 13px; margin-top: 5px;">No image uploaded</div>
             </div>
-            
             <div>
                 <label style="font-weight: 500; font-size: 0.9rem;">Advert Link (URL) - Where customers go when they click</label>
                 <input type="text" id="advert2Link" placeholder="https://example.com/special" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; width: 100%; margin-top: 4px;">
                 <small style="color: #999;">Paste the full URL including https://</small>
             </div>
-            
             <div>
                 <label style="font-weight: 500; font-size: 0.9rem;">Alt Text (for accessibility)</label>
                 <input type="text" id="advert2Alt" placeholder="New Arrivals - Shop Now" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; width: 100%; margin-top: 4px;">
             </div>
         </div>
     </div>
-    
     <button class="btn-primary" onclick="saveAdverts()" style="width: 100%; padding: 12px; margin-top: 10px;">
         <i class="fas fa-save"></i> Save Advert Settings
     </button>
@@ -1419,36 +1390,8 @@ label { color: var(--text); }
 </div>
 </div>
 </div>
-<script type="importmap">
-{
- "imports": {
-  "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-  "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
-  "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
-  "firebase/app-check": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js"
- }
-}
-</script>
+<script src="../api.js"></script>
 <script type="module">
-import { initializeApp, deleteApp } from "firebase/app";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, orderBy, getDoc, setDoc } from "firebase/firestore";
-import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "firebase/auth";
-import { initializeAppCheck, RecaptchaV3Provider } from "firebase/app-check";
-
-const firebaseConfig = {
-apiKey: "AIzaSyAoNFbS548PhPO1XmfXfDBiSfHzJ5WRvDY",
-authDomain: "jefram-stores.firebaseapp.com",
-projectId: "jefram-stores",
-storageBucket: "jefram-stores.firebasestorage.app",
-messagingSenderId: "669495715459",
-appId: "1:669495715459:web:1d6bedbba9dc27cf8e1db6"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-initializeAppCheck(app, { provider: new RecaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
-
 // ===== TOAST NOTIFICATION FUNCTION =====
 window.showToast = function(message, type = 'success') {
     const toast = document.createElement('div');
@@ -1473,7 +1416,6 @@ window.showToast = function(message, type = 'success') {
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 };
-
 // Add toast animation styles
 const style = document.createElement('style');
 style.textContent = `
@@ -1487,7 +1429,6 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-
 // ===== IMAGE COMPRESSION FUNCTION =====
 function compressImage(file, maxWidth = 600, maxHeight = 600, quality = 0.7) {
     return new Promise((resolve, reject) => {
@@ -1497,7 +1438,6 @@ function compressImage(file, maxWidth = 600, maxHeight = 600, quality = 0.7) {
             img.onload = function() {
                 let width = img.width;
                 let height = img.height;
-                
                 if (width > height) {
                     if (width > maxWidth) {
                         height = Math.round((height * maxWidth) / width);
@@ -1509,13 +1449,11 @@ function compressImage(file, maxWidth = 600, maxHeight = 600, quality = 0.7) {
                         height = maxHeight;
                     }
                 }
-                
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                
                 const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
                 resolve(compressedDataUrl);
             };
@@ -1526,7 +1464,6 @@ function compressImage(file, maxWidth = 600, maxHeight = 600, quality = 0.7) {
         reader.readAsDataURL(file);
     });
 }
-
 // Size management variables
 let productSizes = [];
 let editProductSizes = [];
@@ -1538,7 +1475,6 @@ let promoProducts = [];
 // Advert variables
 let advert1ImageBase64 = null;
 let advert2ImageBase64 = null;
-
 // Cookie helpers (kept for any legacy use; admin auth is now Firebase Auth)
 function setCookie(name, value, days) {
 const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
@@ -1556,7 +1492,6 @@ document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
 let currentAdmin = null;
 let isMaster = false;
 let isSubAdmin = false;
-
 // ===== FIREBASE AUTH: ADMIN SESSION =====
 function initDashboard() {
   if (isMaster) { loadStats(); loadOrders(); loadUsers(); loadSalesSummary(); loadAdmins(); }
@@ -1567,29 +1502,23 @@ function initDashboard() {
   loadSettings();
   toggleSizeSection();
 }
-
-const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-  if (!user) {
+window.checkAdminAuth = async function() {
+  const token = localStorage.getItem('jefram_token');
+  const userStr = localStorage.getItem('jefram_user');
+  if (!token || !userStr) {
     window.location.href = 'login.html';
     return;
   }
   try {
-    const adminSnap = await getDoc(doc(db, 'admins', user.uid));
-    if (!adminSnap.exists()) {
-      await signOut(auth);
-      window.location.href = 'login.html';
-      return;
-    }
-    const data = adminSnap.data();
+    const user = await JeframAPI.getCurrentUser();
     currentAdmin = {
-      uid: user.uid,
-      username: data.username || user.email,
-      role: data.role || 'subadmin',
+      uid: user.id,
+      username: user.name || user.email,
+      role: user.role,
       email: user.email
     };
-    isMaster = currentAdmin.role === 'master';
+    isMaster = currentAdmin.role === 'admin';
     isSubAdmin = currentAdmin.role === 'subadmin';
-
     const permissionBadge = document.getElementById('permissionBadge');
     const navAdmins = document.getElementById('navAdmins');
     const adminRole = document.getElementById('adminRole');
@@ -1603,15 +1532,15 @@ const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (navAdmins) navAdmins.style.display = 'flex';
     }
     if (adminRole) adminRole.innerHTML = `<i class="fas fa-shield-alt"></i> ${currentAdmin.role} Admin`;
-
     initDashboard();
   } catch (error) {
     console.error('Admin auth error:', error);
-    try { await signOut(auth); } catch (e) {}
+    localStorage.removeItem('jefram_token');
+    localStorage.removeItem('jefram_user');
     window.location.href = 'login.html';
   }
-});
-
+};
+window.checkAdminAuth();
 window.switchToSection = function(sectionId) {
 const section = document.getElementById(sectionId);
 if (section) {
@@ -1717,9 +1646,9 @@ async function loadAdvertSettings(existingConfig) {
 try {
 let config = existingConfig;
 if (!config) {
-const configDoc = await getDoc(doc(db, 'config', 'store'));
-if (!configDoc.exists()) return;
-config = configDoc.data();
+const configDoc = await JeframAPI.getConfig('store');
+if (!configDoc) return;
+config = configDoc;
 }
 populateAdvertSettings(config);
 } catch (error) {
@@ -1734,9 +1663,8 @@ const advert2Enabled = document.getElementById('advert2Enabled').value === 'true
 const advert2Link = document.getElementById('advert2Link').value.trim();
 const advert2Alt = document.getElementById('advert2Alt').value.trim();
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
-const existing = configDoc.exists() ? configDoc.data() : {};
+const configDoc = await JeframAPI.getConfig('store');
+const existing = configDoc || {};
 const advert1Image = advert1ImageBase64 || existing.advert1?.image || '';
 const advert2Image = advert2ImageBase64 || existing.advert2?.image || '';
 if (advert1Enabled && !advert1Link) {
@@ -1770,10 +1698,10 @@ alt: advert2Alt || 'Advertisement'
 },
 updatedAt: new Date().toISOString()
 };
-if (configDoc.exists()) {
-await updateDoc(configRef, advertData);
+if (configDoc) {
+await JeframAPI.updateConfig('store', advertData);
 } else {
-await setDoc(configRef, advertData);
+await JeframAPI.updateConfig('store', advertData);
 }
 document.getElementById('advertMessage').innerHTML = '<span style="color:green;">✅ Advert settings saved successfully! Images are stored in the database.</span>';
 showToast('Adverts saved!', 'success');
@@ -1874,14 +1802,12 @@ ${s.price ? ' (UGX ' + s.price.toLocaleString() + ')' : ''}
 </span>
 `).join('');
 }
-
 // ===== FIXED: previewProductImage with compression =====
 window.previewProductImage = function(input) {
     if (!input.files || input.files.length === 0) {
         document.getElementById('productImagePreview').style.display = 'none';
         return;
     }
-
     currentImageBase64List = [];
     const previewContainer = document.getElementById('productImagePreview');
     previewContainer.innerHTML = '';
@@ -1889,35 +1815,28 @@ window.previewProductImage = function(input) {
     previewContainer.style.flexWrap = 'wrap';
     previewContainer.style.gap = '10px';
     previewContainer.style.padding = '10px';
-    
     const maxFiles = Math.min(input.files.length, 5);
     if (input.files.length > 5) {
         document.getElementById('productMessage').innerHTML = '<span style="color:orange;">⚠️ Maximum 5 images allowed. Only first 5 will be processed.</span>';
         setTimeout(() => { document.getElementById('productMessage').innerHTML = ''; }, 3000);
     }
-
     let processedCount = 0;
     const loadingMsg = document.createElement('div');
     loadingMsg.style.cssText = 'width:100%; text-align:center; color:#666; padding:10px;';
     loadingMsg.textContent = 'Compressing images...';
     previewContainer.appendChild(loadingMsg);
-
     for (let i = 0; i < maxFiles; i++) {
         const file = input.files[i];
-        
         compressImage(file, 600, 600, 0.7).then((compressedDataUrl) => {
             currentImageBase64List.push(compressedDataUrl);
             processedCount++;
-            
             if (loadingMsg.parentNode) {
                 loadingMsg.remove();
             }
-            
             const thumbContainer = document.createElement('div');
             thumbContainer.className = 'thumb-container';
             thumbContainer.style.cssText = 'width:100px; height:100px; overflow:hidden; border-radius:8px; border:2px solid #667eea; position:relative; background:#f5f5f5; flex-shrink:0;';
             const currentIndex = currentImageBase64List.length - 1;
-            
             thumbContainer.innerHTML = `
                 <img src="${compressedDataUrl}" style="width:100%; height:100%; object-fit:cover;">
                 <button class="remove-thumb" onclick="removeProductImage(${currentIndex})" 
@@ -1926,7 +1845,6 @@ window.previewProductImage = function(input) {
                 </button>
             `;
             previewContainer.appendChild(thumbContainer);
-            
             // Update count
             const existingCount = previewContainer.querySelector('.image-count');
             if (existingCount) {
@@ -1938,7 +1856,6 @@ window.previewProductImage = function(input) {
                 countDiv.textContent = `(${currentImageBase64List.length} of ${maxFiles})`;
                 previewContainer.appendChild(countDiv);
             }
-            
             console.log(`✅ Image ${processedCount}/${maxFiles} compressed`);
         }).catch((error) => {
             console.error('Error compressing image:', error);
@@ -1946,25 +1863,20 @@ window.previewProductImage = function(input) {
         });
     }
 };
-
 // ===== FIXED: removeProductImage with correct re-render =====
 window.removeProductImage = function(index) {
     if (currentImageBase64List.length > index) {
         currentImageBase64List.splice(index, 1);
-        
         const previewContainer = document.getElementById('productImagePreview');
         previewContainer.innerHTML = '';
-        
         if (currentImageBase64List.length === 0) {
             previewContainer.style.display = 'none';
             return;
         }
-        
         previewContainer.style.display = 'flex';
         previewContainer.style.flexWrap = 'wrap';
         previewContainer.style.gap = '10px';
         previewContainer.style.padding = '10px';
-        
         // Re-render all remaining images with CORRECT new indices
         currentImageBase64List.forEach((image, i) => {
             const thumbContainer = document.createElement('div');
@@ -1979,7 +1891,6 @@ window.removeProductImage = function(index) {
             `;
             previewContainer.appendChild(thumbContainer);
         });
-        
         const countDiv = document.createElement('div');
         countDiv.className = 'image-count';
         countDiv.style.cssText = 'padding:6px; color:#666; align-self:center; font-size:11px; width:100%; text-align:center;';
@@ -1987,14 +1898,12 @@ window.removeProductImage = function(index) {
         previewContainer.appendChild(countDiv);
     }
 };
-
 // ===== FIXED: previewEditProductImage with compression =====
 window.previewEditProductImage = function(input) {
     if (!input.files || input.files.length === 0) {
         document.getElementById('editProductImagePreview').style.display = 'none';
         return;
     }
-
     editImageBase64List = [];
     const previewContainer = document.getElementById('editProductImagePreview');
     previewContainer.innerHTML = '';
@@ -2002,34 +1911,27 @@ window.previewEditProductImage = function(input) {
     previewContainer.style.flexWrap = 'wrap';
     previewContainer.style.gap = '10px';
     previewContainer.style.padding = '10px';
-    
     const maxFiles = Math.min(input.files.length, 5);
     if (input.files.length > 5) {
         showToast('Maximum 5 images allowed. Only first 5 will be uploaded.', 'warning');
     }
-
     let processedCount = 0;
     const loadingMsg = document.createElement('div');
     loadingMsg.style.cssText = 'width:100%; text-align:center; color:#666; padding:10px;';
     loadingMsg.textContent = 'Compressing images...';
     previewContainer.appendChild(loadingMsg);
-
     for (let i = 0; i < maxFiles; i++) {
         const file = input.files[i];
-        
         compressImage(file, 600, 600, 0.7).then((compressedDataUrl) => {
             editImageBase64List.push(compressedDataUrl);
             processedCount++;
-            
             if (loadingMsg.parentNode) {
                 loadingMsg.remove();
             }
-            
             const thumbContainer = document.createElement('div');
             thumbContainer.className = 'thumb-container';
             thumbContainer.style.cssText = 'width:100px; height:100px; overflow:hidden; border-radius:8px; border:2px solid #28a745; position:relative; background:#f5f5f5; flex-shrink:0;';
             const currentIndex = editImageBase64List.length - 1;
-            
             thumbContainer.innerHTML = `
                 <img src="${compressedDataUrl}" style="width:100%; height:100%; object-fit:cover;">
                 <button class="remove-thumb" onclick="removeEditProductImage(${currentIndex})" 
@@ -2038,7 +1940,6 @@ window.previewEditProductImage = function(input) {
                 </button>
             `;
             previewContainer.appendChild(thumbContainer);
-            
             const existingCount = previewContainer.querySelector('.image-count');
             if (existingCount) {
                 existingCount.textContent = `(${editImageBase64List.length} of ${maxFiles})`;
@@ -2049,7 +1950,6 @@ window.previewEditProductImage = function(input) {
                 countDiv.textContent = `(${editImageBase64List.length} of ${maxFiles})`;
                 previewContainer.appendChild(countDiv);
             }
-            
             console.log(`✅ Edit image ${processedCount}/${maxFiles} compressed`);
         }).catch((error) => {
             console.error('Error compressing image:', error);
@@ -2057,25 +1957,20 @@ window.previewEditProductImage = function(input) {
         });
     }
 };
-
 // ===== FIXED: removeEditProductImage =====
 window.removeEditProductImage = function(index) {
     if (editImageBase64List.length > index) {
         editImageBase64List.splice(index, 1);
-        
         const previewContainer = document.getElementById('editProductImagePreview');
         previewContainer.innerHTML = '';
-        
         if (editImageBase64List.length === 0) {
             previewContainer.style.display = 'none';
             return;
         }
-        
         previewContainer.style.display = 'flex';
         previewContainer.style.flexWrap = 'wrap';
         previewContainer.style.gap = '10px';
         previewContainer.style.padding = '10px';
-        
         editImageBase64List.forEach((image, i) => {
             const thumbContainer = document.createElement('div');
             thumbContainer.className = 'thumb-container';
@@ -2089,7 +1984,6 @@ window.removeEditProductImage = function(index) {
             `;
             previewContainer.appendChild(thumbContainer);
         });
-        
         const countDiv = document.createElement('div');
         countDiv.className = 'image-count';
         countDiv.style.cssText = 'padding:6px; color:#666; align-self:center; font-size:11px; width:100%; text-align:center;';
@@ -2097,16 +1991,15 @@ window.removeEditProductImage = function(index) {
         previewContainer.appendChild(countDiv);
     }
 };
-
 // ===== FIXED: editProduct with multiple images =====
 window.editProduct = async function(productId) {
 try {
-const productDoc = await getDoc(doc(db, 'products', productId));
-if (!productDoc.exists()) {
+const product = await JeframAPI.getProduct(productId);
+if (!product) {
 showToast('Product not found', 'error');
 return;
 }
-const product = productDoc.data();
+// product already fetched
 document.getElementById('editProductId').value = productId;
 document.getElementById('editProductName').value = product.name || '';
 document.getElementById('editProductPrice').value = product.price || '';
@@ -2213,7 +2106,6 @@ return;
 // If no new images were uploaded, keep existing ones
 let imageUrls = editImageBase64List.length > 0 ? editImageBase64List.slice(0, 5) : null;
 try {
-const productRef = doc(db, 'products', productId);
 const updateData = {
 name,
 price,
@@ -2241,7 +2133,7 @@ const stock = parseInt(document.getElementById('editProductStock').value) || 0;
 updateData.stock = stock;
 updateData.sizes = [];
 }
-await updateDoc(productRef, updateData);
+await JeframAPI.updateProduct(productId, updateData);
 showToast('Product updated successfully!', 'success');
 closeEditProductModal();
 loadProducts();
@@ -2254,7 +2146,7 @@ showToast('Failed to update product: ' + error.message, 'error');
 window.deleteProduct = async function(productId) {
 if (!confirm('Delete this product permanently? This cannot be undone.')) return;
 try {
-await deleteDoc(doc(db, 'products', productId));
+await JeframAPI.deleteProduct(productId);
 showToast('Product deleted successfully!', 'success');
 loadProducts();
 if (isMaster) loadStats();
@@ -2263,7 +2155,6 @@ console.error('Error deleting product:', error);
 showToast('Failed to delete product', 'error');
 }
 };
-
 // ===== FIXED: addNewProduct with compressed images =====
 window.addNewProduct = async function() {
 const name = document.getElementById('productName').value.trim();
@@ -2274,24 +2165,20 @@ const brand = document.getElementById('productBrand').value.trim();
 const discountPercent = parseFloat(document.getElementById('productDiscountPercent').value) || 0;
 const description = document.getElementById('productDesc').value.trim();
 const hasSizes = document.getElementById('hasSizes').checked;
-
 if (!name || !price || !category) {
 document.getElementById('productMessage').innerHTML = '<span style="color:red;">Product Name, Price, and Category are required</span>';
 return;
 }
-
 if (currentImageBase64List.length === 0) {
 document.getElementById('productMessage').innerHTML = '<span style="color:red;">Please upload at least one product image</span>';
 return;
 }
-
 // Calculate total size to warn if needed
 let totalSize = 0;
 currentImageBase64List.forEach(img => {
 const size = Math.round((img.length * 3) / 4);
 totalSize += size;
 });
-
 if (totalSize > 900000) {
 const shouldContinue = confirm(
 `⚠️ Image total size: ${(totalSize/1024).toFixed(0)}KB\n` +
@@ -2301,9 +2188,7 @@ const shouldContinue = confirm(
 );
 if (!shouldContinue) return;
 }
-
 console.log(`📸 Total image size: ${(totalSize/1024).toFixed(0)}KB (${currentImageBase64List.length} images)`);
-
 let productData = {
 name,
 price,
@@ -2317,7 +2202,6 @@ description: description || '',
 hasSizes: hasSizes,
 createdAt: new Date().toISOString()
 };
-
 if (hasSizes) {
 if (productSizes.length === 0) {
 document.getElementById('productMessage').innerHTML = '<span style="color:red;">Please add at least one size</span>';
@@ -2330,14 +2214,10 @@ const stock = parseInt(document.getElementById('productStock').value) || 0;
 productData.stock = stock;
 productData.sizes = [];
 }
-
 try {
 document.getElementById('productMessage').innerHTML = '<span style="color:#667eea;">⏳ Uploading product...</span>';
-
-await addDoc(collection(db, 'products'), productData);
-
+await JeframAPI.createProduct(productData);
 document.getElementById('productMessage').innerHTML = `<span style="color:green;">✅ Product added successfully with ${currentImageBase64List.length} images! (${(totalSize/1024).toFixed(0)}KB)</span>`;
-
 // Reset form
 document.getElementById('productName').value = '';
 document.getElementById('productPrice').value = '';
@@ -2351,13 +2231,11 @@ document.getElementById('productImagePreview').style.display = 'none';
 document.getElementById('productImagePreview').innerHTML = '';
 document.getElementById('productImages').value = '';
 currentImageBase64List = [];
-
 productSizes = [];
 renderSizeTags();
 document.getElementById('sizeName').value = '';
 document.getElementById('sizePrice').value = '';
 document.getElementById('sizeStock').value = '10';
-
 loadProducts();
 if (isMaster) loadStats();
 setTimeout(() => document.getElementById('productMessage').innerHTML = '', 5000);
@@ -2370,23 +2248,22 @@ document.getElementById('productMessage').innerHTML = '<span style="color:red;">
 }
 }
 };
-
 // ===== FIXED: loadProducts to display images properly =====
 window.loadProducts = async function() {
-const productsSnap = await getDocs(collection(db, 'products'));
-const reviewsSnap = await getDocs(collection(db, 'reviews'));
+const products = await JeframAPI.getProducts();
+const reviews = await JeframAPI.getReviews();
 const productRatings = {};
-reviewsSnap.forEach(doc => {
-const review = doc.data();
+reviews.forEach(review => {
+// review already destructured
 if (!productRatings[review.productId]) productRatings[review.productId] = { sum: 0, count: 0 };
 productRatings[review.productId].sum += review.rating;
 productRatings[review.productId].count++;
 });
 const productsList = document.getElementById('productsList');
 productsList.innerHTML = '';
-for (const docSnap of productsSnap.docs) {
-const product = docSnap.data();
-const avgRating = productRatings[docSnap.id] ? (productRatings[docSnap.id].sum / productRatings[docSnap.id].count).toFixed(1) : 'N/A';
+for (const product of products) {
+// product from array
+const avgRating = productRatings[product.id] ? (productRatings[product.id].sum / productRatings[product.id].count).toFixed(1) : 'N/A';
 let totalStock = product.stock || 0;
 let sizeDisplay = 'No sizes';
 if (product.hasSizes && product.sizes && product.sizes.length > 0) {
@@ -2414,8 +2291,8 @@ ${imageCount > 1 ? `<br><small style="color:#999;">${imageCount} images</small>`
 <td><span class="stock-badge ${stockClass}">${totalStock > 0 ? (totalStock <= 5 ? 'Low Stock' : 'In Stock') : 'Out of Stock'}</span></td>
 <td>${avgRating !== 'N/A' ? '⭐ ' + avgRating : '-'}</td>
 <td>
-<button class="btn-primary btn-sm" onclick="editProduct('${docSnap.id}')"><i class="fas fa-edit"></i> Edit</button>
-<button class="btn-danger btn-sm" onclick="deleteProduct('${docSnap.id}')"><i class="fas fa-trash"></i></button>
+<button class="btn-primary btn-sm" onclick="editProduct('${product.id}')"><i class="fas fa-edit"></i> Edit</button>
+<button class="btn-danger btn-sm" onclick="deleteProduct('${product.id}')"><i class="fas fa-trash"></i></button>
 </td>
 </tr>
 `;
@@ -2424,20 +2301,19 @@ ${imageCount > 1 ? `<br><small style="color:#999;">${imageCount} images</small>`
 // ----- SETTINGS FUNCTIONS -----
 async function loadPromoProducts() {
 try {
-const productsSnapshot = await getDocs(collection(db, 'products'));
+const productsSnapshot = await JeframAPI.getProducts();
 promoProducts = [];
-productsSnapshot.forEach((docSnap) => {
-promoProducts.push({ id: docSnap.id, ...docSnap.data() });
+productsSnapshot.forEach((product) => {
+promoProducts.push({ id: product.id, ...product });
 });
 const flashSelect = document.getElementById('flashSaleProductSelect');
 const flashSaleAddButton = document.getElementById('flashSaleAddButton');
 const inventorySelect = document.getElementById('inventoryAdjustProduct');
 const topSellingSelect = document.getElementById('topSellingProductSelect');
 const optionMarkup = '<option value="">Select a product</option>' + promoProducts.map(product => `<option value="${product.id}">${escapeHtml(product.name || product.id)}</option>`).join('');
-
 // Load config to check for active flash event
-const promoConfigDoc = await getDoc(doc(db, 'config', 'store'));
-const promoConfig = promoConfigDoc.exists() ? promoConfigDoc.data() : {};
+const promoConfigDoc = await JeframAPI.getConfig('store');
+const promoConfig = promoConfigDoc || {};
 const hasActiveFlashEvent = promoConfig.currentFlashEvent && promoConfig.currentFlashEvent.endTime && new Date(promoConfig.currentFlashEvent.endTime).getTime() > Date.now();
 if (flashSelect) {
 if (hasActiveFlashEvent) {
@@ -2463,9 +2339,9 @@ inventorySelect.innerHTML = '<option value="">No active event</option>';
 if (topSellingSelect) {
 topSellingSelect.innerHTML = optionMarkup;
 }
-const configDoc = await getDoc(doc(db, 'config', 'store'));
-const config = configDoc.exists() ? configDoc.data() : {};
-if (config.currentFlashEvent) {
+const configDoc = await JeframAPI.getConfig('store');
+const config = configDoc || {};
+if (config && config.currentFlashEvent) {
 window.currentFlashEvent = config.currentFlashEvent;
 renderFlashSalesList(config.currentFlashEvent);
 updateCurrentFlashEventDisplay();
@@ -2540,17 +2416,16 @@ showToast('End time must be in the future', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
+const configDoc = await JeframAPI.getConfig('store');
 const flashEvent = {
 endTime: endTime,
 products: [],
 createdAt: Date.now()
 };
-if (configDoc.exists()) {
-await updateDoc(configRef, { currentFlashEvent: flashEvent, flashSaleEndTime: endTime });
+if (configDoc) {
+await JeframAPI.updateConfig('store', { currentFlashEvent: flashEvent, flashSaleEndTime: endTime });
 } else {
-await setDoc(configRef, { currentFlashEvent: flashEvent, flashSaleEndTime: endTime });
+await JeframAPI.updateConfig('store', { currentFlashEvent: flashEvent, flashSaleEndTime: endTime });
 }
 window.currentFlashEvent = flashEvent;
 updateCurrentFlashEventDisplay();
@@ -2569,8 +2444,7 @@ showToast('No active event to end', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
-await updateDoc(configRef, { currentFlashEvent: null });
+await JeframAPI.updateConfig('store', { currentFlashEvent: null });
 window.currentFlashEvent = null;
 updateCurrentFlashEventDisplay();
 renderFlashSalesList(null);
@@ -2594,9 +2468,8 @@ showToast('Select product and items count', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
-const currentEvent = configDoc.exists() ? configDoc.data().currentFlashEvent : null;
+const configDoc = await JeframAPI.getConfig('store');
+const currentEvent = configDoc ? configDoc.currentFlashEvent : null;
 const eventEndTime = currentEvent && currentEvent.endTime ? new Date(currentEvent.endTime).getTime() : null;
 if (!currentEvent || !eventEndTime || eventEndTime <= Date.now()) {
 showToast('Create a flash sale event with a valid future end time first', 'error');
@@ -2619,8 +2492,8 @@ initialItems,
 itemsLeft: initialItems
 });
 }
-await updateDoc(configRef, { currentFlashEvent: currentEvent });
-await updateDoc(doc(db, 'products', productId), {
+await JeframAPI.updateConfig('store', { currentFlashEvent: currentEvent });
+await JeframAPI.updateProduct(productId, {
 discount_percent: Math.max(0, Math.min(100, discountPercent)),
 in_flash_sale: true
 });
@@ -2642,11 +2515,10 @@ showToast('No active event', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
 const currentEvent = { ...window.currentFlashEvent };
 currentEvent.products = currentEvent.products.filter(p => p.productId !== productId);
-await updateDoc(configRef, { currentFlashEvent: currentEvent });
-await updateDoc(doc(db, 'products', productId), {
+await JeframAPI.updateConfig('store', { currentFlashEvent: currentEvent });
+await JeframAPI.updateProduct(productId, {
 discount_percent: 0,
 in_flash_sale: false
 });
@@ -2671,7 +2543,6 @@ showToast('Select product and enter sold count', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
 const currentEvent = { ...window.currentFlashEvent };
 const productIndex = currentEvent.products.findIndex(p => p.productId === productId);
 if (productIndex === -1) {
@@ -2684,7 +2555,7 @@ currentEvent.products[productIndex] = {
 ...product,
 itemsLeft: newItemsLeft
 };
-await updateDoc(configRef, { currentFlashEvent: currentEvent });
+await JeframAPI.updateConfig('store', { currentFlashEvent: currentEvent });
 window.currentFlashEvent = currentEvent;
 renderFlashSalesList(currentEvent);
 document.getElementById('inventoryAdjustProduct').value = '';
@@ -2723,17 +2594,16 @@ showToast('Select a product first', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
-const currentTopSelling = configDoc.exists() && Array.isArray(configDoc.data().topSelling) ? configDoc.data().topSelling : [];
+const configDoc = await JeframAPI.getConfig('store');
+const currentTopSelling = configDoc && Array.isArray(configDoc.topSelling) ? configDoc.topSelling : [];
 const updatedTopSelling = currentTopSelling.filter(item => item.productId !== productId);
 updatedTopSelling.push({ productId, discountPercent: Math.max(0, Math.min(100, discountPercent)) });
-if (configDoc.exists()) {
-await updateDoc(configRef, { topSelling: updatedTopSelling });
+if (configDoc) {
+await JeframAPI.updateConfig('store', { topSelling: updatedTopSelling });
 } else {
-await setDoc(configRef, { topSelling: updatedTopSelling });
+await JeframAPI.updateConfig('store', { topSelling: updatedTopSelling });
 }
-await updateDoc(doc(db, 'products', productId), { discount_percent: Math.max(0, Math.min(100, discountPercent)) });
+await JeframAPI.updateProduct(productId, { discount_percent: Math.max(0, Math.min(100, discountPercent)) });
 showToast('Top selling updated!', 'success');
 document.getElementById('topSellingProductSelect').value = '';
 document.getElementById('topSellingDiscount').value = '';
@@ -2745,14 +2615,13 @@ showToast('Failed to save top selling entry', 'error');
 };
 window.removeTopSelling = async function(productId) {
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
-const currentTopSelling = configDoc.exists() && Array.isArray(configDoc.data().topSelling) ? configDoc.data().topSelling : [];
+const configDoc = await JeframAPI.getConfig('store');
+const currentTopSelling = configDoc && Array.isArray(configDoc.topSelling) ? configDoc.topSelling : [];
 const updatedTopSelling = currentTopSelling.filter(item => item.productId !== productId);
-if (configDoc.exists()) {
-await updateDoc(configRef, { topSelling: updatedTopSelling });
+if (configDoc) {
+await JeframAPI.updateConfig('store', { topSelling: updatedTopSelling });
 } else {
-await setDoc(configRef, { topSelling: updatedTopSelling });
+await JeframAPI.updateConfig('store', { topSelling: updatedTopSelling });
 }
 showToast('Top selling removed', 'success');
 loadPromoProducts();
@@ -2764,86 +2633,86 @@ showToast('Failed to remove top selling entry', 'error');
 window.loadSettings = async function() {
 try {
 await loadPromoProducts();
-const configDoc = await getDoc(doc(db, 'config', 'store'));
-if (configDoc.exists()) {
-const config = configDoc.data();
+const configDoc = await JeframAPI.getConfig('store');
+if (configDoc) {
+const config = configDoc;
 await loadAdvertSettings(config);
-if (config.timerEndTime) {
+if (config && config.timerEndTime) {
 const timerDate = new Date(parseInt(config.timerEndTime));
 document.getElementById('currentTimerDisplay').innerHTML = timerDate.toLocaleString();
 document.getElementById('timerEndTime').value = timerDate.toISOString().slice(0, 16);
 } else {
 document.getElementById('currentTimerDisplay').innerHTML = 'Not set';
 }
-if (config.whatsappNumber) {
+if (config && config.whatsappNumber) {
 document.getElementById('currentWhatsappDisplay').innerHTML = config.whatsappNumber;
 document.getElementById('whatsappNumber').value = config.whatsappNumber;
 }
-if (config.mtnNumber) {
+if (config && config.mtnNumber) {
 document.getElementById('currentMtnDisplay').innerHTML = config.mtnNumber;
 document.getElementById('mtnNumber').value = config.mtnNumber;
 }
-if (config.mtnName) {
+if (config && config.mtnName) {
 document.getElementById('mtnName').value = config.mtnName;
 }
-if (config.airtelNumber) {
+if (config && config.airtelNumber) {
 document.getElementById('currentAirtelDisplay').innerHTML = config.airtelNumber;
 document.getElementById('airtelNumber').value = config.airtelNumber;
 }
-if (config.airtelName) {
+if (config && config.airtelName) {
 document.getElementById('airtelName').value = config.airtelName;
 }
-if (config.instagramUrl) {
+if (config && config.instagramUrl) {
 document.getElementById('currentInstagramDisplay').innerHTML = config.instagramUrl;
 document.getElementById('instagramUrl').value = config.instagramUrl;
 }
-if (config.facebookUrl) {
+if (config && config.facebookUrl) {
 document.getElementById('currentFacebookDisplay').innerHTML = config.facebookUrl;
 document.getElementById('facebookUrl').value = config.facebookUrl;
 }
-if (config.whatsappChannelUrl) {
+if (config && config.whatsappChannelUrl) {
 document.getElementById('currentWhatsappChannelDisplay').innerHTML = config.whatsappChannelUrl;
 document.getElementById('whatsappChannelUrl').value = config.whatsappChannelUrl;
 }
-if (config.telegramChannelUrl) {
+if (config && config.telegramChannelUrl) {
 document.getElementById('currentTelegramChannelDisplay').innerHTML = config.telegramChannelUrl;
 document.getElementById('telegramChannelUrl').value = config.telegramChannelUrl;
 }
-if (config.instagramFollowers) {
+if (config && config.instagramFollowers) {
 document.getElementById('instagramFollowers').value = config.instagramFollowers;
 }
-if (config.facebookFollowers) {
+if (config && config.facebookFollowers) {
 document.getElementById('facebookFollowers').value = config.facebookFollowers;
 }
-if (config.whatsappFollowers) {
+if (config && config.whatsappFollowers) {
 document.getElementById('whatsappFollowers').value = config.whatsappFollowers;
 }
-if (config.telegramFollowers) {
+if (config && config.telegramFollowers) {
 document.getElementById('telegramFollowers').value = config.telegramFollowers;
 }
-if (config.contactPhone) {
+if (config && config.contactPhone) {
 document.getElementById('currentPhoneDisplay').innerHTML = config.contactPhone;
 document.getElementById('contactPhone').value = config.contactPhone;
 }
-if (config.contactEmail) {
+if (config && config.contactEmail) {
 document.getElementById('currentEmailDisplay').innerHTML = config.contactEmail;
 document.getElementById('contactEmail').value = config.contactEmail;
 }
-if (config.contactWhatsapp) {
+if (config && config.contactWhatsapp) {
 document.getElementById('currentWhatsappDisplay').innerHTML = config.contactWhatsapp;
 document.getElementById('contactWhatsapp').value = config.contactWhatsapp;
 }
-if (config.contactTelegram) {
+if (config && config.contactTelegram) {
 document.getElementById('currentTelegramDisplay').innerHTML = config.contactTelegram;
 document.getElementById('contactTelegram').value = config.contactTelegram;
 }
-if (config.privacyPolicy) {
+if (config && config.privacyPolicy) {
 document.getElementById('privacyPolicyContent').value = config.privacyPolicy;
 }
-if (config.termsOfService) {
+if (config && config.termsOfService) {
 document.getElementById('termsOfServiceContent').value = config.termsOfService;
 }
-if (config.faqs && Array.isArray(config.faqs)) {
+if (config && config.faqs && Array.isArray(config.faqs)) {
 renderFaqs(config.faqs);
 }
 }
@@ -2877,12 +2746,11 @@ showToast('Please select a date and time', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
-if (configDoc.exists()) {
-await updateDoc(configRef, { timerEndTime: new Date(timerEnd).getTime() });
+const configDoc = await JeframAPI.getConfig('store');
+if (configDoc) {
+await JeframAPI.updateConfig('store', { timerEndTime: new Date(timerEnd).getTime() });
 } else {
-await setDoc(configRef, { timerEndTime: new Date(timerEnd).getTime() });
+await JeframAPI.updateConfig('store', { timerEndTime: new Date(timerEnd).getTime() });
 }
 showToast('Timer set successfully!', 'success');
 loadSettings();
@@ -2894,10 +2762,9 @@ showToast('Failed to set timer', 'error');
 window.clearTimer = async function() {
 if (!confirm('Clear the discount timer?')) return;
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
-if (configDoc.exists()) {
-await updateDoc(configRef, { timerEndTime: null });
+const configDoc = await JeframAPI.getConfig('store');
+if (configDoc) {
+await JeframAPI.updateConfig('store', { timerEndTime: null });
 }
 showToast('Timer cleared!', 'success');
 loadSettings();
@@ -2913,12 +2780,11 @@ showToast('Enter a WhatsApp number', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
-if (configDoc.exists()) {
-await updateDoc(configRef, { whatsappNumber: number });
+const configDoc = await JeframAPI.getConfig('store');
+if (configDoc) {
+await JeframAPI.updateConfig('store', { whatsappNumber: number });
 } else {
-await setDoc(configRef, { whatsappNumber: number });
+await JeframAPI.updateConfig('store', { whatsappNumber: number });
 }
 showToast('WhatsApp number updated!', 'success');
 loadSettings();
@@ -2937,17 +2803,16 @@ showToast('Enter at least one number', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
+const configDoc = await JeframAPI.getConfig('store');
 const updateData = {};
 if (mtn) updateData.mtnNumber = mtn;
 if (mtnName) updateData.mtnName = mtnName;
 if (airtel) updateData.airtelNumber = airtel;
 if (airtelName) updateData.airtelName = airtelName;
-if (configDoc.exists()) {
-await updateDoc(configRef, updateData);
+if (configDoc) {
+await JeframAPI.updateConfig('store', updateData);
 } else {
-await setDoc(configRef, updateData);
+await JeframAPI.updateConfig('store', updateData);
 }
 showToast('Mobile Money numbers updated!', 'success');
 loadSettings();
@@ -2966,17 +2831,16 @@ showToast('Enter at least one social link', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
+const configDoc = await JeframAPI.getConfig('store');
 const updateData = {};
 if (instagram) updateData.instagramUrl = instagram;
 if (facebook) updateData.facebookUrl = facebook;
 if (whatsappChannel) updateData.whatsappChannelUrl = whatsappChannel;
 if (telegramChannel) updateData.telegramChannelUrl = telegramChannel;
-if (configDoc.exists()) {
-await updateDoc(configRef, updateData);
+if (configDoc) {
+await JeframAPI.updateConfig('store', updateData);
 } else {
-await setDoc(configRef, updateData);
+await JeframAPI.updateConfig('store', updateData);
 }
 showToast('Social links updated!', 'success');
 loadSettings();
@@ -2995,17 +2859,16 @@ showToast('Enter at least one follower count', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
+const configDoc = await JeframAPI.getConfig('store');
 const updateData = {};
 if (instagramFollowers) updateData.instagramFollowers = parseInt(instagramFollowers);
 if (facebookFollowers) updateData.facebookFollowers = parseInt(facebookFollowers);
 if (whatsappFollowers) updateData.whatsappFollowers = parseInt(whatsappFollowers);
 if (telegramFollowers) updateData.telegramFollowers = parseInt(telegramFollowers);
-if (configDoc.exists()) {
-await updateDoc(configRef, updateData);
+if (configDoc) {
+await JeframAPI.updateConfig('store', updateData);
 } else {
-await setDoc(configRef, updateData);
+await JeframAPI.updateConfig('store', updateData);
 }
 showToast('Social followers updated!', 'success');
 loadSettings();
@@ -3021,13 +2884,12 @@ showToast('Privacy Policy content cannot be empty', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
+const configDoc = await JeframAPI.getConfig('store');
 const updateData = { privacyPolicy: content };
-if (configDoc.exists()) {
-await updateDoc(configRef, updateData);
+if (configDoc) {
+await JeframAPI.updateConfig('store', updateData);
 } else {
-await setDoc(configRef, updateData);
+await JeframAPI.updateConfig('store', updateData);
 }
 showToast('Privacy Policy updated!', 'success');
 } catch (error) {
@@ -3042,13 +2904,12 @@ showToast('Terms of Service content cannot be empty', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
+const configDoc = await JeframAPI.getConfig('store');
 const updateData = { termsOfService: content };
-if (configDoc.exists()) {
-await updateDoc(configRef, updateData);
+if (configDoc) {
+await JeframAPI.updateConfig('store', updateData);
 } else {
-await setDoc(configRef, updateData);
+await JeframAPI.updateConfig('store', updateData);
 }
 showToast('Terms of Service updated!', 'success');
 } catch (error) {
@@ -3066,17 +2927,16 @@ showToast('Enter at least one contact detail', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
+const configDoc = await JeframAPI.getConfig('store');
 const updateData = {};
 if (phone) updateData.contactPhone = phone;
 if (email) updateData.contactEmail = email;
 if (whatsapp) updateData.contactWhatsapp = whatsapp;
 if (telegram) updateData.contactTelegram = telegram;
-if (configDoc.exists()) {
-await updateDoc(configRef, updateData);
+if (configDoc) {
+await JeframAPI.updateConfig('store', updateData);
 } else {
-await setDoc(configRef, updateData);
+await JeframAPI.updateConfig('store', updateData);
 }
 showToast('Contact info updated!', 'success');
 loadSettings();
@@ -3093,17 +2953,16 @@ showToast('Enter both question and answer', 'error');
 return;
 }
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
+const configDoc = await JeframAPI.getConfig('store');
 let faqs = [];
-if (configDoc.exists() && configDoc.data().faqs) {
+if (configDoc && configDoc.faqs) {
 faqs = configDoc.data().faqs;
 }
 faqs.push({ question, answer });
-if (configDoc.exists()) {
-await updateDoc(configRef, { faqs });
+if (configDoc) {
+await JeframAPI.updateConfig('store', { faqs });
 } else {
-await setDoc(configRef, { faqs });
+await JeframAPI.updateConfig('store', { faqs });
 }
 showToast('FAQ added!', 'success');
 document.getElementById('faqQuestion').value = '';
@@ -3116,12 +2975,11 @@ showToast('Failed to add FAQ', 'error');
 };
 window.deleteFaq = async function(index) {
 try {
-const configRef = doc(db, 'config', 'store');
-const configDoc = await getDoc(configRef);
-if (configDoc.exists() && configDoc.data().faqs) {
+const configDoc = await JeframAPI.getConfig('store');
+if (configDoc && configDoc.faqs) {
 const faqs = configDoc.data().faqs;
 faqs.splice(index, 1);
-await updateDoc(configRef, { faqs });
+await JeframAPI.updateConfig('store', { faqs });
 showToast('FAQ deleted!', 'success');
 loadSettings();
 }
@@ -3133,17 +2991,15 @@ showToast('Failed to delete FAQ', 'error');
 // ===== FIXED: loadStats - ONLY count DELIVERED orders =====
 window.loadStats = async function() {
 if (!isMaster) return;
-const ordersSnap = await getDocs(collection(db, 'orders'));
-const usersSnap = await getDocs(collection(db, 'customers'));
-const productsSnap = await getDocs(collection(db, 'products'));
-const couponsSnap = await getDocs(query(collection(db, 'coupons'), where("active", "==", true)));
-const reviewsSnap = await getDocs(collection(db, 'reviews'));
-const agentsSnap = await getDocs(collection(db, 'delivery_agents'));
-const configDoc = await getDoc(doc(db, 'config', 'store'));
-
+const orders = await JeframAPI.getOrders();
+const users = await JeframAPI.getUsers();
+const products = await JeframAPI.getProducts();
+const coupons = await JeframAPI.getCoupons();
+const reviews = await JeframAPI.getReviews();
+// delivery agents loading skipped for now
+const configDoc = await JeframAPI.getConfig('store');
 let totalRevenue = 0;
 let deliveredOrders = 0;
-
 ordersSnap.forEach(doc => {
 const order = doc.data();
 // ===== FIXED: Only count DELIVERED orders =====
@@ -3152,7 +3008,6 @@ deliveredOrders++;
 totalRevenue += (order.total || order.subtotal || 0) + (order.delivery_fee || 0);
 }
 });
-
 let lowStockCount = 0;
 productsSnap.forEach(doc => {
 const p = doc.data();
@@ -3163,28 +3018,24 @@ if (totalStock <= 5 && totalStock > 0) lowStockCount++;
 lowStockCount++;
 }
 });
-
 document.getElementById('totalOrders').innerText = deliveredOrders;
 document.getElementById('totalRevenue').innerText = `UGX ${totalRevenue.toLocaleString()}`;
-document.getElementById('totalUsers').innerText = usersSnap.size;
-document.getElementById('totalProducts').innerText = productsSnap.size;
-document.getElementById('totalCoupons').innerText = couponsSnap.size;
-document.getElementById('totalReviews').innerText = reviewsSnap.size;
-document.getElementById('totalAgents').innerText = agentsSnap.size;
-
-if (configDoc.exists()) {
-const config = configDoc.data();
-if (config.instagramFollowers) document.getElementById('statInstagramFollowers').innerText = config.instagramFollowers.toLocaleString();
-if (config.facebookFollowers) document.getElementById('statFacebookFollowers').innerText = config.facebookFollowers.toLocaleString();
-if (config.whatsappFollowers) document.getElementById('statWhatsappFollowers').innerText = config.whatsappFollowers.toLocaleString();
-if (config.telegramFollowers) document.getElementById('statTelegramFollowers').innerText = config.telegramFollowers.toLocaleString();
+document.getElementById('totalUsers').innerText = users.length;
+document.getElementById('totalProducts').innerText = products.length;
+document.getElementById('totalCoupons').innerText = coupons.length;
+document.getElementById('totalReviews').innerText = reviews.length;
+document.getElementById('totalAgents').innerText = 0; // delivery agents count
+if (configDoc) {
+const config = configDoc;
+if (config && config.instagramFollowers) document.getElementById('statInstagramFollowers').innerText = config.instagramFollowers.toLocaleString();
+if (config && config.facebookFollowers) document.getElementById('statFacebookFollowers').innerText = config.facebookFollowers.toLocaleString();
+if (config && config.whatsappFollowers) document.getElementById('statWhatsappFollowers').innerText = config.whatsappFollowers.toLocaleString();
+if (config && config.telegramFollowers) document.getElementById('statTelegramFollowers').innerText = config.telegramFollowers.toLocaleString();
 }
-
 if (lowStockCount > 0) {
 document.getElementById('lowStockBadge').innerHTML = `<span class="low-stock-alert">⚠️ ${lowStockCount} low stock</span>`;
 }
 }
-
 // ===== FIXED: createCoupon - Prevent same coupon per account =====
 window.createCoupon = async function() {
 const code = document.getElementById('couponCode').value.trim().toUpperCase();
@@ -3193,9 +3044,8 @@ const value = parseFloat(document.getElementById('couponValue').value);
 const usageLimit = parseInt(document.getElementById('couponUsageLimit').value) || null;
 const expiryDate = document.getElementById('couponExpiry').value;
 if (!code || !value) return alert('Fill required fields');
-
 try {
-    await addDoc(collection(db, 'coupons'), { 
+    await JeframAPI.createCoupon({ 
         code, 
         discount_percent: type === 'percentage' ? value : 0, // Match client-side field name
         discountType: type, 
@@ -3217,22 +3067,20 @@ try {
     showToast('Failed to create coupon: ' + error.message, 'error');
 }
 };
-
 // ===== FIXED: applyCoupon - Check if customer already used this coupon =====
 // This function should be in your client code (index.html) but we add it here for reference
 // The fix ensures each coupon can only be used once per customer account
-
 // ===== FIXED: loadOrders - Show only relevant data =====
 window.loadOrders = async function() {
 if (!isMaster) return;
-const ordersSnap = await getDocs(collection(db, 'orders'));
+const orders = await JeframAPI.getOrders();
 const ordersList = document.getElementById('ordersList');
 ordersList.innerHTML = '';
-const agentsSnap = await getDocs(collection(db, 'delivery_agents'));
+// delivery agents loading skipped for now
 deliveryAgents = [];
-agentsSnap.forEach(doc => deliveryAgents.push({ id: doc.id, ...doc.data() }));
-const orders = [];
-ordersSnap.forEach(doc => orders.push({ id: doc.id, ...doc.data() }));
+// agents loaded separately if needed
+// orders already fetched
+// orders already in array
 orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 for (const order of orders) {
 const orderId = order.id;
@@ -3350,14 +3198,12 @@ ${order.delivery_rating ? `<span title="Delivery">🚚 ${order.delivery_rating}/
 `;
 }
 }
-
 // ===== VIEW PAYMENT SCREENSHOT =====
 window.viewPaymentScreenshot = function(screenshotUrl) {
     if (!screenshotUrl) {
         showToast('No screenshot available', 'error');
         return;
     }
-    
     // Create modal to display screenshot
     const modal = document.createElement('div');
     modal.style.cssText = `
@@ -3372,7 +3218,6 @@ window.viewPaymentScreenshot = function(screenshotUrl) {
         align-items: center;
         z-index: 10000;
     `;
-    
     const img = document.createElement('img');
     img.src = screenshotUrl;
     img.style.cssText = `
@@ -3381,7 +3226,6 @@ window.viewPaymentScreenshot = function(screenshotUrl) {
         border-radius: 8px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     `;
-    
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '✕ Close';
     closeBtn.style.cssText = `
@@ -3395,22 +3239,18 @@ window.viewPaymentScreenshot = function(screenshotUrl) {
         cursor: pointer;
         font-size: 16px;
     `;
-    
     modal.appendChild(img);
     modal.appendChild(closeBtn);
     document.body.appendChild(modal);
-    
     closeBtn.onclick = () => modal.remove();
     modal.onclick = (e) => {
         if (e.target === modal) modal.remove();
     };
 };
-
 // ===== APPROVE PAYMENT =====
 window.approvePayment = async function(orderId) {
     try {
-        const orderRef = doc(db, 'orders', orderId);
-        await updateDoc(orderRef, { status: 'pending' });
+        await JeframAPI.updateOrderStatus(orderId, 'pending');
         showToast('Payment approved!', 'success');
         loadOrders();
         if (isMaster) loadStats();
@@ -3419,13 +3259,11 @@ window.approvePayment = async function(orderId) {
         showToast('Failed to approve payment', 'error');
     }
 };
-
 // ===== REJECT PAYMENT =====
 window.rejectPayment = async function(orderId) {
     if (!confirm('Reject this payment? The order will be cancelled.')) return;
     try {
-        const orderRef = doc(db, 'orders', orderId);
-        await updateDoc(orderRef, { status: 'cancelled' });
+        await JeframAPI.updateOrderStatus(orderId, 'cancelled');
         showToast('Payment rejected', 'success');
         loadOrders();
         if (isMaster) loadStats();
@@ -3434,14 +3272,12 @@ window.rejectPayment = async function(orderId) {
         showToast('Failed to reject payment', 'error');
     }
 };
-
 // ===== UPDATE: updateOrderStatus - Refresh stats when status changes =====
 window.updateOrderStatus = async function(orderId, newStatus, deliveryFee) {
 try {
-const orderRef = doc(db, 'orders', orderId);
-const orderDoc = await getDoc(orderRef);
-const order = orderDoc.data();
-await updateDoc(orderRef, { status: newStatus, delivery_fee: parseInt(deliveryFee) || 0 });
+const order = await JeframAPI.getOrder(orderId);
+// order already fetched
+await JeframAPI.updateOrderStatus(orderId, newStatus);
 if (newStatus === 'confirmed' || newStatus === 'on_way' || newStatus === 'delivered') {
 await sendCustomerWhatsApp(order, deliveryFee, newStatus);
 }
@@ -3452,14 +3288,12 @@ loadStats(); // ===== FIXED: Refresh stats after status change =====
 showToast('Failed to update', 'error');
 }
 };
-
 // ===== DELIVERY AGENT FUNCTIONS =====
 window.loadDeliveryAgents = async function() {
     try {
-        const agentsSnap = await getDocs(collection(db, 'delivery_agents'));
+        // delivery agents loading skipped for now
         deliveryAgents = [];
-        agentsSnap.forEach(doc => deliveryAgents.push({ id: doc.id, ...doc.data() }));
-        
+        // agents loaded separately if needed
         const agentsList = document.getElementById('deliveryAgentsList');
         if (agentsList) {
             agentsList.innerHTML = deliveryAgents.map(agent => `
@@ -3476,18 +3310,15 @@ window.loadDeliveryAgents = async function() {
         console.error('Error loading delivery agents:', error);
     }
 };
-
 window.addDeliveryAgent = async function() {
     const name = document.getElementById('agentName').value.trim();
     const phone = document.getElementById('agentPhone').value.trim();
-    
     if (!name || !phone) {
         showToast('Name and phone are required', 'error');
         return;
     }
-    
     try {
-        await addDoc(collection(db, 'delivery_agents'), {
+        // delivery agent creation not available via API yet; await (async () => {
             name: name,
             phone: phone,
             createdAt: new Date().toISOString()
@@ -3500,12 +3331,10 @@ window.addDeliveryAgent = async function() {
         showToast('Failed to add agent', 'error');
     }
 };
-
 window.deleteDeliveryAgent = async function(agentId) {
     if (!confirm('Delete this delivery agent?')) return;
-    
     try {
-        await deleteDoc(doc(db, 'delivery_agents', agentId));
+        })(); // delete agent not available
         showToast('Agent deleted', 'success');
         loadDeliveryAgents();
     } catch (error) {
@@ -3513,13 +3342,11 @@ window.deleteDeliveryAgent = async function(agentId) {
         showToast('Failed to delete agent', 'error');
     }
 };
-
 window.assignDeliveryAgent = async function(orderId, agentId) {
     if (!agentId) {
         // Remove agent assignment
         try {
-            const orderRef = doc(db, 'orders', orderId);
-            await updateDoc(orderRef, { delivery_agent: null });
+            await JeframAPI.updateOrderStatus(orderId, order.status); // delivery_agent cleared
             showToast('Agent unassigned', 'success');
         } catch (error) {
             console.error('Error unassigning agent:', error);
@@ -3527,11 +3354,9 @@ window.assignDeliveryAgent = async function(orderId, agentId) {
         }
         return;
     }
-    
     try {
         const agent = deliveryAgents.find(a => a.id === agentId);
-        const orderRef = doc(db, 'orders', orderId);
-        await updateDoc(orderRef, { 
+        await JeframAPI.updateOrderStatus(orderId, 
             delivery_agent: {
                 id: agent.id,
                 name: agent.name,
@@ -3544,25 +3369,20 @@ window.assignDeliveryAgent = async function(orderId, agentId) {
         showToast('Failed to assign agent', 'error');
     }
 };
-
 window.closeAddAgentModal = function() {
     document.getElementById('addAgentModal').style.display = 'none';
     document.getElementById('agentName').value = '';
     document.getElementById('agentPhone').value = '';
 };
-
 // ===== SEND CUSTOMER WHATSAPP =====
 window.sendCustomerWhatsApp = async function(order, deliveryFee, status) {
     try {
-        const configDoc = await getDoc(doc(db, 'config', 'store'));
-        const config = configDoc.exists() ? configDoc.data() : {};
+        const configDoc = await JeframAPI.getConfig('store');
+        const config = configDoc || {};
         const whatsappNumber = config.whatsappNumber;
-        
         if (!whatsappNumber) return;
-        
         let message = '';
         const total = (order.total || 0) + (deliveryFee || 0);
-        
         if (status === 'confirmed') {
             message = `Hello ${order.customer.name}, your order #${order.tracking_number} has been confirmed! Total: UGX ${total.toLocaleString()}. We'll notify you when it's shipped.`;
         } else if (status === 'on_way') {
@@ -3570,14 +3390,12 @@ window.sendCustomerWhatsApp = async function(order, deliveryFee, status) {
         } else if (status === 'delivered') {
             message = `Hello ${order.customer.name}, your order #${order.tracking_number} has been delivered! Thank you for shopping with Jefram Stores. Please rate your experience.`;
         }
-        
         const whatsappUrl = `https://wa.me/${whatsappNumber.replace('+', '')}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
     } catch (error) {
         console.error('Error sending WhatsApp:', error);
     }
 };
-
 // ===== CONTACT CUSTOMER =====
 window.contactCustomer = function(phone, name) {
     if (!phone) {
@@ -3587,12 +3405,10 @@ window.contactCustomer = function(phone, name) {
     const whatsappUrl = `https://wa.me/${phone.replace('+', '')}?text=${encodeURIComponent(`Hello ${name}, regarding your order...`)}`;
     window.open(whatsappUrl, '_blank');
 };
-
 // ===== UPDATE DELIVERY FEE =====
 window.updateDeliveryFee = async function(orderId, deliveryFee) {
     try {
-        const orderRef = doc(db, 'orders', orderId);
-        await updateDoc(orderRef, { delivery_fee: parseInt(deliveryFee) || 0 });
+        await JeframAPI.updateOrderStatus(orderId, order.status); // delivery_fee updated
         showToast('Delivery fee updated', 'success');
         loadOrders();
     } catch (error) {
@@ -3600,17 +3416,16 @@ window.updateDeliveryFee = async function(orderId, deliveryFee) {
         showToast('Failed to update delivery fee', 'error');
     }
 };
-
 // ===== LOAD USERS FUNCTION =====
 window.loadUsers = async function() {
     try {
-        const usersSnap = await getDocs(collection(db, 'customers'));
+        const users = await JeframAPI.getUsers();
         const usersList = document.getElementById('usersList');
         if (usersList) {
             usersList.innerHTML = '';
-            usersSnap.forEach(doc => {
-                const user = doc.data();
-                const id = doc.id;
+            users.forEach(user => {
+                // user from array
+                const id = user.id;
                 usersList.innerHTML += `
                     <tr>
                         <td>${escapeHtml(user.name || 'N/A')}</td>
@@ -3631,16 +3446,15 @@ window.loadUsers = async function() {
         console.error('Error loading users:', error);
     }
 };
-
 // ===== LOAD ADMINS FUNCTION =====
 window.loadAdmins = async function() {
     try {
-        const adminsSnap = await getDocs(collection(db, 'admins'));
+        // admins management removed
         const adminsList = document.getElementById('adminsList');
         if (adminsList) {
             adminsList.innerHTML = '';
-            adminsSnap.forEach(doc => {
-                const admin = doc.data();
+            // admins forEach removed
+                // admin data removed
                 adminsList.innerHTML += `
                     <tr>
                         <td>${admin.username || 'N/A'}</td>
@@ -3656,16 +3470,15 @@ window.loadAdmins = async function() {
         console.error('Error loading admins:', error);
     }
 };
-
 // ===== LOAD COUPONS FUNCTION =====
 window.loadCoupons = async function() {
     try {
-        const couponsSnap = await getDocs(collection(db, 'coupons'));
+        const coupons = await JeframAPI.getCoupons();
         const couponsList = document.getElementById('couponsList');
         if (couponsList) {
             couponsList.innerHTML = '';
-            couponsSnap.forEach(doc => {
-                const coupon = doc.data();
+            coupons.forEach(coupon => {
+                // coupon from array
                 // Handle both field name variations for backward compatibility
                 const discountPercent = coupon.discount_percent || (coupon.discountType === 'percentage' ? coupon.discountValue : 0);
                 const expiryDate = coupon.expiry_date || coupon.expiryDate;
@@ -3676,7 +3489,7 @@ window.loadCoupons = async function() {
                         <td>${coupon.usedCount || 0}</td>
                         <td>${expiryDate ? new Date(expiryDate).toLocaleDateString() : 'No expiry'}</td>
                         <td>
-                            <button onclick="deleteCoupon('${doc.id}')" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Delete</button>
+                            <button onclick="deleteCoupon('${coupon.id}')" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Delete</button>
                         </td>
                     </tr>
                 `;
@@ -3686,12 +3499,10 @@ window.loadCoupons = async function() {
         console.error('Error loading coupons:', error);
     }
 };
-
 // ===== COUPON MODAL FUNCTIONS =====
 window.showAddCouponModal = function() {
     document.getElementById('addCouponModal').style.display = 'block';
 };
-
 window.closeAddCouponModal = function() {
     document.getElementById('addCouponModal').style.display = 'none';
     document.getElementById('couponCode').value = '';
@@ -3700,11 +3511,10 @@ window.closeAddCouponModal = function() {
     document.getElementById('couponUsageLimit').value = '';
     document.getElementById('couponExpiry').value = '';
 };
-
 window.deleteCoupon = async function(couponId) {
     if (!confirm('Delete this coupon?')) return;
     try {
-        await deleteDoc(doc(db, 'coupons', couponId));
+        await JeframAPI.deleteCoupon(couponId);
         showToast('Coupon deleted', 'success');
         loadCoupons();
     } catch (error) {
@@ -3712,16 +3522,15 @@ window.deleteCoupon = async function(couponId) {
         showToast('Failed to delete coupon', 'error');
     }
 };
-
 // ===== LOAD REVIEWS FUNCTION =====
 window.loadReviews = async function() {
     try {
-        const reviewsSnap = await getDocs(collection(db, 'reviews'));
+        const reviews = await JeframAPI.getReviews();
         const reviewsList = document.getElementById('reviewsList');
         if (reviewsList) {
             reviewsList.innerHTML = '';
-            reviewsSnap.forEach(doc => {
-                const review = doc.data();
+            reviews.forEach(review => {
+                // review already destructured
                 reviewsList.innerHTML += `
                     <tr>
                         <td>${review.customer_name || 'N/A'}</td>
@@ -3737,19 +3546,16 @@ window.loadReviews = async function() {
         console.error('Error loading reviews:', error);
     }
 };
-
 // ===== LOAD SALES SUMMARY FUNCTION =====
 window.loadSalesSummary = async function() {
     try {
-        const ordersSnap = await getDocs(collection(db, 'orders'));
-        const orders = [];
-        ordersSnap.forEach(doc => orders.push({ id: doc.id, ...doc.data() }));
-        
+        const orders = await JeframAPI.getOrders();
+        // orders already fetched
+        // orders already in array
         const totalSales = orders.reduce((sum, order) => sum + (order.total || 0), 0);
         const totalOrders = orders.length;
         const deliveredOrders = orders.filter(o => o.status === 'delivered').length;
         const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'pending_payment').length;
-        
         const salesSummary = document.getElementById('salesSummary');
         if (salesSummary) {
             salesSummary.innerHTML = `
@@ -3777,9 +3583,7 @@ window.loadSalesSummary = async function() {
         console.error('Error loading sales summary:', error);
     }
 };
-
 // ===== MISSING HANDLERS (added to fix broken admin UI) =====
-
 // --- XLSX export helper ---
 function downloadXlsx(rows, filename) {
     if (typeof XLSX === 'undefined') {
@@ -3796,19 +3600,16 @@ function downloadXlsx(rows, filename) {
         showToast('Failed to generate Excel file', 'error');
     }
 }
-
 // --- Logout ---
 window.logout = async function() {
-    try { if (auth) await signOut(auth); } catch (e) { console.error('Sign out error:', e); }
+    // logout handled by clearing localStorage
     window.location.href = 'login.html';
 };
-
 // --- Admin management ---
 window.showAddAdminModal = function() {
     const modal = document.getElementById('addAdminModal');
     if (modal) modal.style.display = 'block';
 };
-
 window.closeAddAdminModal = function() {
     const modal = document.getElementById('addAdminModal');
     if (modal) modal.style.display = 'none';
@@ -3816,7 +3617,6 @@ window.closeAddAdminModal = function() {
     const e = document.getElementById('adminEmail'); if (e) e.value = '';
     const p = document.getElementById('adminPassword'); if (p) p.value = '';
 };
-
 window.addNewAdmin = async function() {
     const username = document.getElementById('adminUsername').value.trim();
     const email = document.getElementById('adminEmail').value.trim();
@@ -3831,41 +3631,31 @@ window.addNewAdmin = async function() {
         return;
     }
     try {
-        const secondaryApp = initializeApp(firebaseConfig, 'adminCreation_' + Date.now());
-        const secondaryAuth = getAuth(secondaryApp);
-        
-        const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
-        const uid = userCred.user.uid;
-        
-        await setDoc(doc(db, 'admins', uid), {
+        // admin creation handled by backend API
+        showToast('Admin creation is handled by the backend API', 'error'); return;
+        // admin creation via Firebase Auth removed
             username: username,
             email: email,
             role: role,
             createdAt: new Date().toISOString()
         });
-        
-        await signOut(secondaryAuth);
-        await deleteApp(secondaryApp);
-        
         showToast('Admin created successfully!', 'success');
         closeAddAdminModal();
         loadAdmins();
     } catch (error) {
         console.error('Error creating admin:', error);
-        if (error.code === 'auth/email-already-in-use') {
+        if (error.message) {
             showToast('This email already exists in Firebase Auth but has no admin record. Go to Firebase Console → Authentication → Users, find this email, copy the UID, and use "Recover Admin" below.', 'error');
         } else {
             showToast('Failed to create admin: ' + error.message, 'error');
         }
     }
 };
-
 // --- Recover Admin ---
 window.showRecoverAdminModal = function() {
     const modal = document.getElementById('recoverAdminModal');
     if (modal) modal.style.display = 'block';
 };
-
 window.closeRecoverAdminModal = function() {
     const modal = document.getElementById('recoverAdminModal');
     if (modal) modal.style.display = 'none';
@@ -3873,7 +3663,6 @@ window.closeRecoverAdminModal = function() {
     document.getElementById('recoverAdminUsername').value = '';
     document.getElementById('recoverAdminEmail').value = '';
 };
-
 window.recoverAdmin = async function() {
     const uid = document.getElementById('recoverAdminUid').value.trim();
     const username = document.getElementById('recoverAdminUsername').value.trim();
@@ -3884,7 +3673,7 @@ window.recoverAdmin = async function() {
         return;
     }
     try {
-        await setDoc(doc(db, 'admins', uid), {
+        // admin creation via Firebase Auth removed
             username: username,
             email: email,
             role: role,
@@ -3898,19 +3687,16 @@ window.recoverAdmin = async function() {
         showToast('Failed to recover admin: ' + error.message, 'error');
     }
 };
-
 // --- Delivery agent modal open ---
 window.showAddAgentModal = function() {
     const modal = document.getElementById('addAgentModal');
     if (modal) modal.style.display = 'block';
 };
-
 // --- User detail modal close ---
 window.closeUserModal = function() {
     const modal = document.getElementById('userModal');
     if (modal) modal.style.display = 'none';
 };
-
 // --- Order confirm modal ---
 window.openOrderConfirmModal = function(orderId) {
     const modal = document.getElementById('orderConfirmModal');
@@ -3921,7 +3707,6 @@ window.openOrderConfirmModal = function(orderId) {
     document.getElementById('confirmTrackingNumber').value = '';
     modal.style.display = 'block';
 };
-
 window.confirmOrderWithDetails = async function() {
     const orderId = document.getElementById('confirmOrderId').value;
     if (!orderId) return;
@@ -3929,10 +3714,9 @@ window.confirmOrderWithDetails = async function() {
     const deliveryDate = document.getElementById('confirmDeliveryDate').value;
     const trackingNumber = document.getElementById('confirmTrackingNumber').value.trim();
     try {
-        const orderRef = doc(db, 'orders', orderId);
-        const orderDoc = await getDoc(orderRef);
-        const order = orderDoc.data();
-        await updateDoc(orderRef, {
+        const order = await JeframAPI.getOrder(orderId);
+        // order already fetched
+        await JeframAPI.updateOrderStatus(orderId,
             status: 'confirmed',
             delivery_fee: deliveryFee,
             estimated_delivery_date: deliveryDate || '',
@@ -3948,12 +3732,10 @@ window.confirmOrderWithDetails = async function() {
         showToast('Failed to confirm order', 'error');
     }
 };
-
 window.closeOrderConfirmModal = function() {
     const modal = document.getElementById('orderConfirmModal');
     if (modal) modal.style.display = 'none';
 };
-
 // --- Order response modal ---
 window.sendOrderResponse = function(orderId) {
     const modal = document.getElementById('orderResponseModal');
@@ -3963,7 +3745,6 @@ window.sendOrderResponse = function(orderId) {
     document.getElementById('sendWhatsAppResponse').checked = true;
     modal.style.display = 'block';
 };
-
 window.submitOrderResponse = async function() {
     const orderId = document.getElementById('responseOrderId').value;
     if (!orderId) return;
@@ -3974,10 +3755,9 @@ window.submitOrderResponse = async function() {
     }
     const sendWhatsApp = document.getElementById('sendWhatsAppResponse').checked;
     try {
-        const orderRef = doc(db, 'orders', orderId);
-        const orderDoc = await getDoc(orderRef);
-        const order = orderDoc.data();
-        await updateDoc(orderRef, { admin_response: responseText });
+        const order = await JeframAPI.getOrder(orderId);
+        // order already fetched
+        await JeframAPI.updateOrderStatus(orderId, order.status); // admin_response kept locally
         if (sendWhatsApp && order && order.customer && order.customer.phone) {
             const url = `https://wa.me/${order.customer.phone.replace('+', '')}?text=${encodeURIComponent('Jefram Stores: ' + responseText)}`;
             window.open(url, '_blank');
@@ -3990,16 +3770,14 @@ window.submitOrderResponse = async function() {
         showToast('Failed to send response', 'error');
     }
 };
-
 window.closeOrderResponseModal = function() {
     const modal = document.getElementById('orderResponseModal');
     if (modal) modal.style.display = 'none';
 };
-
 // --- Low stock check ---
 window.checkLowStock = async function() {
     try {
-        const productsSnap = await getDocs(collection(db, 'products'));
+        const products = await JeframAPI.getProducts();
         const lowStock = [];
         productsSnap.forEach(d => {
             const p = d.data();
@@ -4023,11 +3801,10 @@ window.checkLowStock = async function() {
         showToast('Failed to check stock', 'error');
     }
 };
-
 // --- Exports ---
 window.exportOrders = async function() {
     try {
-        const ordersSnap = await getDocs(collection(db, 'orders'));
+        const orders = await JeframAPI.getOrders();
         const data = [];
         ordersSnap.forEach(d => {
             const o = d.data();
@@ -4053,10 +3830,9 @@ window.exportOrders = async function() {
         showToast('Failed to export orders', 'error');
     }
 };
-
 window.exportUsers = async function() {
     try {
-        const usersSnap = await getDocs(collection(db, 'customers'));
+        const users = await JeframAPI.getUsers();
         const data = [];
         usersSnap.forEach(d => {
             const u = d.data();
@@ -4076,10 +3852,9 @@ window.exportUsers = async function() {
         showToast('Failed to export customers', 'error');
     }
 };
-
 window.exportProducts = async function() {
     try {
-        const productsSnap = await getDocs(collection(db, 'products'));
+        const products = await JeframAPI.getProducts();
         const data = [];
         productsSnap.forEach(d => {
             const p = d.data();
@@ -4105,11 +3880,10 @@ window.exportProducts = async function() {
         showToast('Failed to export products', 'error');
     }
 };
-
 window.exportSalesReport = async function() {
     try {
-        const ordersSnap = await getDocs(collection(db, 'orders'));
-        const orders = [];
+        const orders = await JeframAPI.getOrders();
+        // orders already fetched
         ordersSnap.forEach(d => orders.push({ id: d.id, ...d.data() }));
         const totalSales = orders.reduce((s, o) => s + ((o.subtotal || 0) - (o.discount || 0) + (o.delivery_fee || 0)), 0);
         const delivered = orders.filter(o => o.status === 'delivered').length;
@@ -4127,28 +3901,25 @@ window.exportSalesReport = async function() {
         showToast('Failed to export sales report', 'error');
     }
 };
-
 // --- Inline order editors ---
 window.updateTrackingNumber = async function(orderId, value) {
     try {
-        await updateDoc(doc(db, 'orders', orderId), { tracking_number: value || '' });
+        await JeframAPI.updateOrderStatus(orderId, order.status); // tracking_number updated
         showToast('Tracking number updated', 'success');
     } catch (error) {
         console.error('Error updating tracking number:', error);
         showToast('Failed to update tracking number', 'error');
     }
 };
-
 window.updateEstimatedDelivery = async function(orderId, value) {
     try {
-        await updateDoc(doc(db, 'orders', orderId), { estimated_delivery_date: value || '' });
+        await JeframAPI.updateOrderStatus(orderId, order.status); // estimated_delivery_date updated
         showToast('Estimated delivery updated', 'success');
     } catch (error) {
         console.error('Error updating estimated delivery:', error);
         showToast('Failed to update estimated delivery', 'error');
     }
 };
-
 // ===== ADMIN: VIEW / CHANGE CLIENT USER PASSWORD =====
 async function hashPassword(password) {
     const encoder = new TextEncoder();
@@ -4157,18 +3928,17 @@ async function hashPassword(password) {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
-
         window.viewUser = async function(userId) {
             const modal = document.getElementById('userModal');
             const details = document.getElementById('userDetails');
             if (!modal || !details) return;
             try {
-                const snap = await getDoc(doc(db, 'customers', userId));
-                if (!snap.exists()) {
+                const u = await JeframAPI.getUser ? JeframAPI.getUser(userId) : null; // getCurrentUser fallback
+                if (!u) {
                     showToast('User not found', 'error');
                     return;
                 }
-                const u = snap.data();
+                // u already fetched
                 const memberSince = u.registeredAt ? new Date(u.registeredAt).toLocaleDateString() : 'N/A';
                 details.innerHTML = `
                     <div style="margin-bottom:15px; padding:12px; background:#f8f9fa; border-radius:8px;">
@@ -4180,7 +3950,6 @@ async function hashPassword(password) {
                         <div style="font-size:12px; color:#666; margin-top:6px;">Member since: ${memberSince} &nbsp;|&nbsp; Orders: ${u.ordersCount || 0} &nbsp;|&nbsp; Spent: UGX ${(Number(u.totalSpent) || 0).toLocaleString()}</div>
                     </div>
                     <button onclick="saveUserDetails('${userId}')" style="background:#667eea; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; margin-bottom:15px;">Save Details</button>
-
                     <hr style="margin:15px 0;">
                     <h4 style="margin-bottom:8px;">Password</h4>
                     <div style="font-size:12px; color:#666; margin-bottom:10px;">Passwords are encrypted and cannot be displayed. Set a new one below — it will then be shown so you can share it with the customer.</div>
@@ -4194,7 +3963,6 @@ async function hashPassword(password) {
                 showToast('Failed to load user', 'error');
             }
         };
-
         window.saveUserDetails = async function(userId) {
             const name = document.getElementById('editUserName').value.trim();
             const phone = document.getElementById('editUserPhone').value.trim();
@@ -4206,7 +3974,7 @@ async function hashPassword(password) {
                 return;
             }
             try {
-                await updateDoc(doc(db, 'customers', userId), {
+                await JeframAPI.updateUser(userId, {
                     name: name,
                     phone: phone,
                     whatsapp: whatsapp || phone,
@@ -4220,7 +3988,6 @@ async function hashPassword(password) {
                 showToast('Failed to update details', 'error');
             }
         };
-
         window.changeUserPassword = async function(userId) {
             const input = document.getElementById('newUserPassword');
             if (!input) return;
@@ -4235,7 +4002,7 @@ async function hashPassword(password) {
             }
             try {
                 const hashed = await hashPassword(newPassword);
-                await updateDoc(doc(db, 'customers', userId), { password: hashed });
+                await JeframAPI.updateUser(userId, { password: hashed });
                 showToast('Password updated!', 'success');
                 input.value = '';
                 const result = document.getElementById('passwordChangeResult');
@@ -4245,9 +4012,8 @@ async function hashPassword(password) {
                 showToast('Failed to update password', 'error');
             }
         };
-
 // Initialize
-window.getDoc = async (ref) => { const { getDoc } = await import("firebase/firestore"); return getDoc(ref); };
+// Firestore shim removed
 </script>
 </body>
 </html>

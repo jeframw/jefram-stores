@@ -854,48 +854,8 @@
         </div>
     </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
-                "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
-                "firebase/app-check": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js"
-            }
-        }
-    </script>
-
+    <script src="../api.js"></script>
     <script type="module">
-        import { initializeApp } from "firebase/app";
-        import { getFirestore, collection, getDocs, addDoc, query, where, updateDoc, doc, deleteDoc, getDoc, orderBy, limit, onSnapshot, setDoc } from "firebase/firestore";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateEmail, updatePassword, deleteUser, sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-        import { initializeAppCheck, RecaptchaV3Provider } from "firebase/app-check";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAoNFbS548PhPO1XmfXfDBiSfHzJ5WRvDY",
-            authDomain: "jefram-stores.firebaseapp.com",
-            projectId: "jefram-stores",
-            storageBucket: "jefram-stores.firebasestorage.app",
-            messagingSenderId: "669495715459",
-            appId: "1:669495715459:web:1d6bedbba9dc27cf8e1db6"
-        };
-
-        let app, db, auth;
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            initializeAppCheck(app, { provider: new RecaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
-            console.log('Firebase connected successfully');
-        } catch (error) {
-            console.error('Firebase initialization error:', error);
-            window.showToast('Failed to connect to database. Please refresh the page.', 'error');
-            const productsContainer = document.getElementById('productsContainer');
-            if (productsContainer) {
-                productsContainer.innerHTML = '<div style="text-align:center; padding:2rem; color:red;">Database connection failed. Please refresh the page.</div>';
-            }
-        }
-
         // Global variables
         let products = [];
         let cart = [];
@@ -1013,7 +973,7 @@
                     displayAdverts(config);
                     return;
                 }
-                const configDoc = await getDoc(doc(db, 'config', 'store'));
+                const configDoc = await JeframAPI.getConfig("store");
                 if (configDoc.exists()) {
                     displayAdverts(configDoc.data());
                 }
@@ -1103,42 +1063,30 @@
             }
             
             window.saveWishlistToLocalStorage();
-            await window.saveWishlistToFirebase();
+            await window.saveWishlistToAPI();
             window.renderWishlist();
             window.updateWishlistButtons();
         };
 
-        window.saveWishlistToFirebase = async function() {
-            if (!db || !currentUserDocId) return;
-            try {
-                const cleanWishlist = (wishlist || []).filter(item => item && item.id).map(item => ({
-                    id: String(item.id || ''),
-                    name: String(item.name || 'Unknown'),
-                    price: typeof item.price === 'number' ? item.price : Number(item.price) || 0,
-                    image_url: String(item.image_url || 'https://via.placeholder.com/300')
-                }));
+        window.saveWishlistToAPI = async function() {
+                const user = await JeframAPI.getCurrentUser();
+                await JeframAPI.updateUser(user.id, { wishlist: cleanWishlist });
+            }));
                 
                 wishlist = cleanWishlist;
                 window.saveWishlistToLocalStorage();
                 
-                await updateDoc(doc(db, 'customers', currentUserDocId), { wishlist: cleanWishlist });
+                await JeframAPI.updateUser(currentUserDocId, data);
             } catch(e) { 
                 console.error('Error saving wishlist:', e);
             }
         };
 
-        window.loadWishlistFromFirebase = async function() {
-            if (!db || !currentUserDocId) return;
-            try {
-                const docSnap = await getDoc(doc(db, 'customers', currentUserDocId));
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.wishlist && Array.isArray(data.wishlist)) {
-                        wishlist = data.wishlist.filter(item => item && item.id);
-                        window.saveWishlistToLocalStorage();
-                        window.renderWishlist();
-                        window.updateWishlistButtons();
-                    }
+        window.loadWishlistFromAPI = async function() {
+                const user = await JeframAPI.getCurrentUser();
+                const data = await JeframAPI.getCurrentUser();
+                return data.wishlist || [];
+            }
                 }
             } catch(e) { 
                 console.error('Error loading wishlist:', e);
@@ -1149,7 +1097,7 @@
             if (!productId) return;
             wishlist = (wishlist || []).filter(i => String(i.id) !== String(productId));
             window.saveWishlistToLocalStorage();
-            await window.saveWishlistToFirebase();
+            await window.saveWishlistToAPI();
             window.renderWishlist();
             window.updateWishlistButtons();
             window.showToast('Removed from wishlist', 'info');
@@ -1185,28 +1133,19 @@
         };
 
         window.saveWishlistToLocalStorage = function() {
-            try {
-                localStorage.setItem('jefram-wishlist', JSON.stringify(wishlist || []));
-            } catch (e) {
-                console.error('Failed to save wishlist to local storage', e);
-            }
-        };
+            };
 
         window.addToCartFromWishlist = function(productId) {
             window.addToCart(productId);
             window.removeFromWishlist(productId);
         };
 
-        window.mergeWishlistIntoFirebase = async function() {
-            if (!db || !currentUserDocId) return;
-            const localWishlist = JSON.parse(localStorage.getItem('jefram-wishlist') || '[]');
-            if (!Array.isArray(localWishlist) || localWishlist.length === 0) return;
-            localWishlist.forEach(item => {
-                if (item && item.id && !wishlist.find(i => String(i.id) === String(item.id))) {
-                    wishlist.push(item);
-                }
+        window.mergeWishlistIntoAPI = async function() {
+                const user = await JeframAPI.getCurrentUser();
+                await JeframAPI.updateUser(user.id, { wishlist: mergedWishlist });
+            }
             });
-            await window.saveWishlistToFirebase();
+            await window.saveWishlistToAPI();
             localStorage.removeItem('jefram-wishlist');
         };
 
@@ -1496,36 +1435,25 @@
         };
 
         // ----- CART WITH SIZE SUPPORT -----
-        window.saveCartToFirebase = async function() {
-            if (!db || !currentUserDocId) return;
-            try {
-                await updateDoc(doc(db, 'customers', currentUserDocId), { cart: cart });
+        window.saveCartToAPI = async function() {
+                const user = await JeframAPI.getCurrentUser();
+                await JeframAPI.updateUser(user.id, { cart: cart });
+            });
             } catch(e) { console.error('Error saving cart:', e); }
         };
 
-        window.loadCartFromFirebase = async function() {
-            if (!db || !currentUserDocId) return;
-            try {
-                const docSnap = await getDoc(doc(db, 'customers', currentUserDocId));
-                if (docSnap.exists() && docSnap.data().cart) {
-                    cart = docSnap.data().cart;
-                    window.renderCart();
-                    window.updateCartCount();
-                }
+        window.loadCartFromAPI = async function() {
+                const user = await JeframAPI.getCurrentUser();
+                const data = await JeframAPI.getCurrentUser();
+                return data.cart || [];
+            }
             } catch(e) { console.error('Error loading cart:', e); }
         };
 
-        window.mergeGuestCartIntoFirebase = async function() {
-            if (!db || !currentUserDocId || !currentUser) return;
-            const guestCart = JSON.parse(localStorage.getItem('jefram-cart') || '[]');
-            if (!guestCart.length) return;
-
-            const mergedCart = Array.isArray(cart) ? [...cart] : [];
-            guestCart.forEach(item => {
-                const existing = mergedCart.find(i => i.id === item.id && (i.selectedSize || '') === (item.selectedSize || ''));
-                if (existing) {
-                    existing.quantity = Number(existing.quantity || 0) + Number(item.quantity || 0);
-                } else {
+        window.mergeGuestCartIntoAPI = async function() {
+                const user = await JeframAPI.getCurrentUser();
+                await JeframAPI.updateUser(user.id, { cart: cart });
+            } else {
                     const product = (products || []).find(p => p.id === item.id);
                     const discount = Number(product?.discount_percent || 0);
                     const originalPrice = Number(item.price || product?.price || 0);
@@ -1542,14 +1470,14 @@
             });
             cart = mergedCart;
             localStorage.removeItem('jefram-cart');
-            await window.saveCartToFirebase();
+            await window.saveCartToAPI();
             window.updateCartCount();
         };
 
         window.openCart = async function() {
             const guestCart = JSON.parse(localStorage.getItem('jefram-cart') || '[]');
             if (currentUser && guestCart.length > 0) {
-                await window.mergeGuestCartIntoFirebase();
+                await window.mergeGuestCartIntoAPI();
                 window.renderCart();
                 document.getElementById('cartModal').style.display = 'flex';
                 return;
@@ -1617,7 +1545,7 @@
                 if (item.quantity <= 0) {
                     cart = cart.filter(i => !(i.id === productId && (i.selectedSize || '') === selectedSize));
                 }
-                await window.saveCartToFirebase();
+                await window.saveCartToAPI();
                 window.renderCart();
                 window.updateCartCount();
             }
@@ -1625,7 +1553,7 @@
 
         window.removeFromCart = async function(productId, selectedSize = '') {
             cart = cart.filter(i => !(i.id === productId && (i.selectedSize || '') === selectedSize));
-            await window.saveCartToFirebase();
+            await window.saveCartToAPI();
             window.renderCart();
             window.updateCartCount();
         };
@@ -1709,7 +1637,7 @@
                 });
             }
 
-            await window.saveCartToFirebase();
+            await window.saveCartToAPI();
             window.updateCartCount();
             window.showToast(product.name + (selectedSize ? ' (' + selectedSize + ')' : '') + ' added to cart!');
             
@@ -1771,8 +1699,7 @@
             const code = document.getElementById('couponCode').value.trim().toUpperCase();
             if (!code) { window.showToast('Enter a coupon code', 'error'); return; }
             try {
-                const q = query(collection(db, 'coupons'), where("code", "==", code), where("active", "==", true));
-                const snapshot = await getDocs(q);
+                const coupons = await JeframAPI.getCoupons({ code: code, active: "true" });
                 if (snapshot.empty) { window.showToast('Invalid coupon', 'error'); return; }
                 snapshot.forEach(doc => { appliedCoupon = { id: doc.id, ...doc.data() }; });
                 
@@ -1899,27 +1826,21 @@
                 };
                 if (appliedCoupon) { orderData.coupon_code = appliedCoupon.code; }
                 
-                const orderRef = await addDoc(collection(db, 'orders'), orderData);
+                const order = await JeframAPI.createOrder(orderData);
                 if (appliedCoupon) {
-                    await updateDoc(doc(db, 'coupons', appliedCoupon.id), { usedCount: (appliedCoupon.usedCount || 0) + 1 });
+                    await JeframAPI.updateCouponUsage(appliedCoupon.id);
                 }
                 
                 for (const item of cart) {
-                    const productRef = doc(db, 'products', item.id);
-                    const productSnap = await getDoc(productRef);
-                    if (productSnap.exists()) {
-                        const productData = productSnap.data();
-                        if (item.selectedSize && productData.sizes) {
-                            const updatedSizes = productData.sizes.map(s => {
-                                if (s.size === item.selectedSize) {
-                                    return { ...s, stock: Math.max(0, s.stock - item.quantity) };
+                    const product = await JeframAPI.getProduct(item.id);
+                if (product) {;
                                 }
                                 return s;
                             });
                             const newTotalStock = updatedSizes.reduce((sum, s) => sum + s.stock, 0);
-                            await updateDoc(productRef, { sizes: updatedSizes, stock: newTotalStock });
+                            await JeframAPI.updateProduct(item.id, { sizes: updatedSizes, stock: newTotalStock });
                         } else {
-                            await updateDoc(productRef, { stock: Math.max(0, (productData.stock || 0) - item.quantity) });
+                            await JeframAPI.updateProduct(item.id, { stock: Math.max(0, (productData.stock || 0) - item.quantity) });
                         }
                     }
                 }
@@ -1941,7 +1862,7 @@
                 
                 cart = [];
                 appliedCoupon = null;
-                await window.saveCartToFirebase();
+                await window.saveCartToAPI();
                 window.updateCartCount();
                 window.closeCart();
             } catch(e) {
@@ -1983,14 +1904,11 @@
             if (!db) { window.showToast('Database not connected', 'error'); return; }
             if (reviewRating === 0) { window.showToast('Select a rating', 'error'); return; }
             try {
-                await addDoc(collection(db, 'reviews'), {
-                    productId: currentReviewProduct.id,
-                    productName: currentReviewProduct.name,
-                    userId: currentUserDocId,
-                    userName: currentUser.name,
-                    rating: reviewRating,
-                    comment: document.getElementById('reviewText').value,
-                    createdAt: new Date().toISOString()
+                await JeframAPI.createReview({
+                    productId: product.id,
+                    productName: product.name,
+                    rating: rating,
+                    comment: comment
                 });
                 window.showToast('Review submitted!', 'success');
                 window.closeReviewModal();
@@ -2003,7 +1921,7 @@
         window.loadProductReviews = async function(productId) {
             if (!db) return '';
             try {
-                const snapshot = await getDocs(query(collection(db, 'reviews'), where("productId", "==", productId), limit(3)));
+                const reviews = await JeframAPI.getReviews({ product_id: productId, limit: 3 });
                 let html = '<div class="reviews-section">';
                 if (!snapshot.empty) {
                     html += '<strong>Reviews:</strong>';
@@ -2049,13 +1967,7 @@
             if (!db) { window.showToast('Database not connected', 'error'); return; }
             if (currentProductRating === 0 && currentDeliveryRating === 0) { window.showToast('Select at least one rating', 'error'); return; }
             try {
-                const orderRef = doc(db, 'orders', currentRatingOrderId);
-                await updateDoc(orderRef, {
-                    product_rating: currentProductRating,
-                    delivery_rating: currentDeliveryRating,
-                    rating_comment: document.getElementById('ratingComment').value,
-                    rated_at: new Date().toISOString()
-                });
+                await JeframAPI.rateOrder(currentRatingOrderId, { product_rating: productRating, delivery_rating: deliveryRating, rating_comment: comment });
                 window.showToast('Rating submitted!', 'success');
                 window.closeRatingModal();
                 window.loadOrders();
@@ -2075,12 +1987,6 @@
             
             document.getElementById('ratingComment').value = '';
             let orderData = {};
-            try {
-                const orderSnap = await getDoc(doc(db, 'orders', orderId));
-                if (orderSnap.exists()) orderData = orderSnap.data();
-            } catch (err) {
-                console.error('Error loading order details for rating:', err);
-            }
             const itemsText = Array.isArray(orderData.items) ? orderData.items.map(i => window.escapeHtml(i.name || '')).join(', ') : '';
             document.getElementById('ratingOrderInfo').innerHTML = 
                 '<p><strong>Order #' + orderId.slice(-6) + '</strong></p>' +
@@ -2093,8 +1999,7 @@
             document.getElementById('ratingModal').style.display = 'none';
         };
 
-        // ===== FIREBASE AUTH: USER REGISTRATION (email/password) =====
-        let isRegistering = false;
+                let isRegistering = false;
         window.checkPasswordStrength = function(password) {
             let strength = 0;
             if (password.length >= 8) strength++;
@@ -2139,9 +2044,14 @@
             if (!window.checkPasswordStrength(password)) { window.showToast('Password is too weak. Please use a stronger password.', 'error'); return; }
             isRegistering = true;
             try {
-                const userCred = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCred.user;
-                currentUserDocId = user.uid;
+                const result = await JeframAPI.customerRegister({
+                    name: name,
+                    email: email,
+                    password: password,
+                    phone: phone,
+                    address: location
+                });
+                currentUserDocId = result.user.id;
                 currentUser = {
                     name: name,
                     phone: phone,
@@ -2152,13 +2062,11 @@
                     wishlist: [],
                     cart: []
                 };
-                await setDoc(doc(db, 'customers', currentUserDocId), currentUser);
-                try { await user.sendEmailVerification(); } catch(e) { console.error('Verification email error:', e); }
-                window.showToast('Registration successful! Please verify your email.', 'success');
+                window.showToast('Registration successful!', 'success');
 
-                await window.loadWishlistFromFirebase();
-                await window.mergeGuestCartIntoFirebase();
-                await window.loadCartFromFirebase();
+                await window.loadWishlistFromAPI();
+                await window.mergeGuestCartIntoAPI();
+                await window.loadCartFromAPI();
                 document.getElementById('registerModal').style.display = 'none';
                 ['customerName', 'customerPhone', 'customerWhatsapp', 'customerEmail', 'customerLocation', 'customerPassword'].forEach(id => document.getElementById(id).value = '');
             } catch(e) {
@@ -2177,24 +2085,12 @@
             }
         };
 
-        // ===== FIREBASE AUTH: LOGIN (email/password) =====
-        window.loginUser = async function() {
+                window.loginUser = async function() {
             if (!db || !auth) { window.showToast('Database not connected', 'error'); return; }
             const email = document.getElementById('loginPhone').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
             if (!email || !password) { window.showToast('Enter email and password', 'error'); return; }
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                window.showToast('Welcome back!', 'success');
-                document.getElementById('loginModal').style.display = 'none';
-                document.getElementById('loginPhone').value = '';
-                document.getElementById('loginPassword').value = '';
-                // onAuthStateChanged listener loads profile, cart, wishlist and refreshes UI
-            } catch(e) {
-                console.error('Login error:', e);
-                if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-email') {
-                    window.showToast('Incorrect email or password', 'error');
-                } else {
+            else {
                     window.showToast('Login failed: ' + e.message, 'error');
                 }
             }
@@ -2219,13 +2115,7 @@
 
         window.resendVerificationEmail = async function() {
             if (!auth || !auth.currentUser) { window.showToast('Please sign in first', 'error'); return; }
-            try {
-                await auth.currentUser.sendEmailVerification();
-                window.showToast('Verification email sent! Please check your inbox.', 'success');
-            } catch(e) {
-                window.showToast('Failed to send verification email', 'error');
-            }
-        };
+            };
 
         window.closePasswordResetModal = function() { 
             document.getElementById('passwordResetModal').style.display = 'none';
@@ -2233,8 +2123,7 @@
             document.getElementById('resetMessage').innerHTML = '';
         };
         
-        // ===== FIREBASE AUTH: SEND PASSWORD RESET EMAIL =====
-        window.sendResetCode = async function() {
+                window.sendResetCode = async function() {
             if (!auth) {
                 window.showToast('Database not connected', 'error');
                 return;
@@ -2278,7 +2167,6 @@
         };
 
         window.logout = async function() {
-            try { if (auth) await signOut(auth); } catch (e) { console.error('Sign out error:', e); }
             currentUser = null;
             currentUserDocId = null;
             cart = [];
@@ -2294,16 +2182,15 @@
             if (!confirm('This is your last chance. All your data will be permanently deleted. Continue?')) return;
             
             try {
-                if (currentUserDocId && db) {
-                    await deleteDoc(doc(db, 'customers', currentUserDocId));
-                }
-                if (auth && auth.currentUser) {
-                    await deleteUser(auth.currentUser);
+                if (currentUserDocId) {
+                    await JeframAPI.updateUser(currentUserDocId, { deleted: true });
                 }
                 currentUser = null;
                 currentUserDocId = null;
                 cart = [];
                 wishlist = [];
+                localStorage.removeItem('jefram_token');
+                localStorage.removeItem('jefram_user');
                 window.updateCartCount();
                 window.showToast('Account deleted successfully', 'success');
                 window.location.reload();
@@ -2353,8 +2240,7 @@
             ['currentPassword', 'newPassword', 'confirmPassword'].forEach(id => document.getElementById(id).value = '');
         };
 
-        // ===== FIREBASE AUTH: CHANGE PASSWORD =====
-        window.changePassword = async function() {
+                window.changePassword = async function() {
             if (!auth || !auth.currentUser) { window.showToast('Please sign in again', 'error'); return; }
             const currentPassword = document.getElementById('currentPassword').value;
             const newPassword = document.getElementById('newPassword').value;
@@ -2373,17 +2259,7 @@
                 return;
             }
 
-            try {
-                const credential = EmailAuthProvider.credential(auth.currentUser.email, currentPassword);
-                await reauthenticateWithCredential(auth.currentUser, credential);
-                await updatePassword(auth.currentUser, newPassword);
-                window.showToast('Password updated successfully!', 'success');
-                window.cancelChangePassword();
-            } catch (error) {
-                console.error('Password update error:', error);
-                if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                    window.showToast('Current password is incorrect', 'error');
-                } else if (error.code === 'auth/requires-recent-login') {
+            else if (error.code === 'auth/requires-recent-login') {
                     window.showToast('Please sign out and sign in again, then retry', 'error');
                 } else {
                     window.showToast('Failed to update password: ' + error.message, 'error');
@@ -2407,18 +2283,11 @@
                     location: newLocation
                 };
                 if (newEmail) updateData.email = newEmail;
-                await updateDoc(doc(db, 'customers', currentUserDocId), updateData);
+                await JeframAPI.updateUser(currentUserDocId, updateData);
                 currentUser = { ...currentUser, name: newName, phone: newPhone, whatsapp: newWhatsapp, location: newLocation, email: newEmail };
 
-                // Sync email with Firebase Auth when changed
-                if (newEmail && auth && auth.currentUser && newEmail !== auth.currentUser.email) {
-                    try {
-                        await updateEmail(auth.currentUser, newEmail);
-                    } catch (emailErr) {
-                        console.error('Email update error:', emailErr);
-                        if (emailErr.code === 'auth/requires-recent-login') {
-                            window.showToast('Profile updated. Please re-login to apply email change.', 'success');
-                        } else {
+                                if (newEmail && auth && auth.currentUser && newEmail !== auth.currentUser.email) {
+                    else {
                             window.showToast('Profile updated, but email not changed: ' + emailErr.message, 'success');
                         }
                     }
@@ -2439,7 +2308,7 @@
             const ordersList = document.getElementById('ordersList');
             ordersList.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
             try {
-                const snapshot = await getDocs(query(collection(db, 'orders'), where("customerId", "==", currentUserDocId)));
+                const orders = await JeframAPI.getOrders();
                 if (snapshot.empty) { ordersList.innerHTML = '<div style="text-align:center; padding:2rem;">No orders found</div>'; return; }
                 let html = '';
                 snapshot.forEach(doc => {
@@ -2542,8 +2411,7 @@
         window.cancelOrder = async function(orderId) {
             if (!confirm('Are you sure you want to cancel this order? This action cannot be undone.')) return;
             try {
-                const orderRef = doc(db, 'orders', orderId);
-                await updateDoc(orderRef, { status: 'cancelled' });
+                await JeframAPI.updateOrderStatus(orderId, "cancelled");
                 window.showToast('Order cancelled successfully', 'success');
                 window.loadOrders();
             } catch(error) {
@@ -2570,7 +2438,7 @@
             const trackingInfo = document.getElementById('trackingInfo');
             trackingInfo.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
             try {
-                const snapshot = await getDocs(query(collection(db, 'orders'), where("customerId", "==", currentUserDocId)));
+                const orders = await JeframAPI.getOrders();
                 if (snapshot.empty) { 
                     trackingInfo.innerHTML = '<div style="text-align:center; padding:2rem;">No orders to track</div>'; 
                     return; 
@@ -2679,21 +2547,17 @@
         };
 
         // ----- RECENTLY VIEWED -----
-        window.saveRecentlyViewedToFirebase = async function() {
-            if (!db || !currentUserDocId) return;
-            try {
-                await updateDoc(doc(db, 'customers', currentUserDocId), { recentlyViewed: recentlyViewed });
+        window.saveRecentlyViewedToAPI = async function() {
+                const user = await JeframAPI.getCurrentUser();
+                await JeframAPI.updateUser(user.id, { recentlyViewed: recentlyViewed });
             } catch(e) { console.error('Error saving recently viewed:', e); }
         };
 
-        window.loadRecentlyViewedFromFirebase = async function() {
-            if (!db || !currentUserDocId) return;
-            try {
-                const docSnap = await getDoc(doc(db, 'customers', currentUserDocId));
-                if (docSnap.exists() && docSnap.data().recentlyViewed) {
-                    recentlyViewed = docSnap.data().recentlyViewed;
-                    renderRecentlyViewed();
-                }
+        window.loadRecentlyViewedFromAPI = async function() {
+                const user = await JeframAPI.getCurrentUser();
+                const data = await JeframAPI.getCurrentUser();
+                return data.recentlyViewed || [];
+            }
             } catch(e) { console.error('Error loading recently viewed:', e); }
         };
 
@@ -2708,7 +2572,7 @@
                 category: product.category
             });
             if (recentlyViewed.length > 10) recentlyViewed = recentlyViewed.slice(0, 10);
-            await window.saveRecentlyViewedToFirebase();
+            await window.saveRecentlyViewedToAPI();
             renderRecentlyViewed();
         };
 
@@ -2810,17 +2674,7 @@
             }
             
             try {
-                onSnapshot(doc(db, 'config', 'store'), (docSnap) => {
-                    if (docSnap.exists()) {
-                        const config = docSnap.data();
-                        displayAdverts(config);
-                        if (config.timerEndTime) {
-                            timerEndTime = config.timerEndTime;
-                            
-                            if (timerEndTime < Date.now()) {
-                                timerElement.style.display = 'none';
-                                return;
-                            }
+                setInterval(() => loadConfig(), 5000)
                             
                             timerElement.style.display = 'block';
                             
@@ -2898,7 +2752,7 @@
             if (!roll || !section) return;
             
             try {
-                const configDoc = await getDoc(doc(db, 'config', 'store'));
+                const configDoc = await JeframAPI.getConfig("store");
                 if (configDoc.exists() && configDoc.data().flashSales && Array.isArray(configDoc.data().flashSales)) {
                     const flashSaleEnd = configDoc.data().flashSaleEndTime;
                     flashSaleEndTime = flashSaleEnd || null;
@@ -2939,7 +2793,7 @@
             if (!roll) return;
             
             try {
-                const configDoc = await getDoc(doc(db, 'config', 'store'));
+                const configDoc = await JeframAPI.getConfig("store");
                 if (configDoc.exists() && configDoc.data().topSelling && Array.isArray(configDoc.data().topSelling)) {
                     const topSellingIds = configDoc.data().topSelling.map(ts => ts.productId);
                     const topSellingProducts = products.filter(p => topSellingIds.includes(p.id));
@@ -3375,16 +3229,7 @@
             }
             const grid = document.getElementById('productsRoll');
             if (grid) grid.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-            try {
-                // Try to get from cache first (with fallback)
-                let cachedProducts = null;
-                try {
-                    cachedProducts = await getCachedData('products', 'all');
-                } catch (cacheError) {
-                    console.warn('Cache read failed, fetching from Firebase:', cacheError);
-                }
-
-                if (cachedProducts) {
+            if (cachedProducts) {
                     products = cachedProducts;
                     categories = [...new Set(products.map(p => p.category).filter(c => c))];
                     renderBrands();
@@ -3399,8 +3244,7 @@
                     return;
                 }
 
-                // Fetch from Firebase
-                await fetchFreshProducts();
+                                await fetchFreshProducts();
             } catch (error) {
                 console.error('Error fetching products:', error);
                 if (grid) grid.innerHTML = '<div style="text-align:center; padding:2rem; color:red;">Failed to load products. Please refresh the page.</div>';
@@ -3411,7 +3255,7 @@
         async function fetchFreshProducts() {
             if (!db) return;
             try {
-                const snapshot = await getDocs(query(collection(db, 'products'), limit(50)));
+                const products = await JeframAPI.getProducts({ limit: 50 });
                 products = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
@@ -3419,12 +3263,6 @@
                     products.push({ id: doc.id, ...data });
                 });
                 // Cache the products (with error handling)
-                try {
-                    await setCachedData('products', 'all', products);
-                } catch (cacheError) {
-                    console.warn('Failed to cache products:', cacheError);
-                }
-                
                 categories = [...new Set(products.map(p => p.category).filter(c => c))];
                 renderBrands();
                 window.renderCategories();
@@ -3445,28 +3283,13 @@
                 console.warn('Database not initialized for config');
                 return;
             }
-            try {
-                // Try cache first (with fallback)
-                let cachedConfig = null;
-                try {
-                    cachedConfig = await getCachedData('config', 'store');
-                } catch (cacheError) {
-                    console.warn('Config cache read failed:', cacheError);
-                }
-
-                if (cachedConfig) {
+            if (cachedConfig) {
                     applyConfig(cachedConfig);
                 }
 
-                // Fetch from Firebase
-                const docSnap = await getDoc(doc(db, 'config', 'store'));
+                                const docSnap = await JeframAPI.getConfig("store");
                 if (docSnap.exists()) {
                     const config = docSnap.data();
-                    try {
-                        await setCachedData('config', 'store', config);
-                    } catch (cacheError) {
-                        console.warn('Config cache write failed:', cacheError);
-                    }
                     applyConfig(config);
                 }
             } catch (error) {
@@ -3528,8 +3351,7 @@
         }
 
         // ----- AUTH STATE (Firebase Auth) -----
-        // Replaces the old custom-session cookie validation. Restores the
-        // signed-in customer on page load and keeps profile/cart/wishlist in sync.
+                // signed-in customer on page load and keeps profile/cart/wishlist in sync.
         window.handleAuthState = async function(user) {
             if (!user) {
                 currentUser = null;
@@ -3543,12 +3365,8 @@
             }
             try {
                 currentUserDocId = user.uid;
-                const userDocRef = doc(db, 'customers', user.uid);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    currentUser = userDoc.data();
-                    currentUser.email = currentUser.email || user.email;
-                } else {
+                const userData = await JeframAPI.getCurrentUser();
+                if (userData) { else {
                     currentUser = {
                         name: user.email ? user.email.split('@')[0] : 'Customer',
                         email: user.email,
@@ -3559,13 +3377,12 @@
                         cart: [],
                         registeredAt: new Date().toISOString()
                     };
-                    try { await setDoc(userDocRef, currentUser); } catch (e) { console.error('Error creating profile:', e); }
-                }
-                await window.loadWishlistFromFirebase();
-                await window.mergeWishlistIntoFirebase();
-                await window.mergeGuestCartIntoFirebase();
-                await window.loadCartFromFirebase();
-                await window.loadRecentlyViewedFromFirebase();
+                    }
+                await window.loadWishlistFromAPI();
+                await window.mergeWishlistIntoAPI();
+                await window.mergeGuestCartIntoAPI();
+                await window.loadCartFromAPI();
+                await window.loadRecentlyViewedFromAPI();
                 window.updateCartCount();
                 if (currentUser && !user.emailVerified) {
                     const banner = document.getElementById('emailVerificationBanner');
@@ -3575,8 +3392,6 @@
                 console.error('Auth state error:', error);
             }
         };
-
-        onAuthStateChanged(auth, window.handleAuthState);
 
         // ----- INITIALIZATION -----
         let renderTimeout;
@@ -3589,17 +3404,10 @@
         });
 
         (async function init() {
-            try {
-                await initCache();
-            } catch (cacheError) {
-                console.warn('Cache initialization failed, continuing without cache:', cacheError);
-            }
-            
             await window.loadConfig();
             await window.fetchProducts();
             window.loadWishlistFromLocalStorage();
-            // Signed-in customer is restored asynchronously by onAuthStateChanged.
-            window.updateCartCount();
+                        window.updateCartCount();
             setupSearchAutocomplete();
             window.setupRatingStars();
         })();

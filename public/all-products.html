@@ -65,39 +65,9 @@
         </div>
     </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
-                "firebase/app-check": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js"
-            }
-        }
-    </script>
-
-    <script type="module">
-        import { initializeApp } from "firebase/app";
-        import { getFirestore, collection, getDocs } from "firebase/firestore";
-        import { initializeAppCheck, RecaptchaV3Provider } from "firebase/app-check";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAoNFbS548PhPO1XmfXfDBiSfHzJ5WRvDY",
-            authDomain: "jefram-stores.firebaseapp.com",
-            projectId: "jefram-stores",
-            storageBucket: "jefram-stores.firebasestorage.app",
-            messagingSenderId: "669495715459",
-            appId: "1:669495715459:web:1d6bedbba9dc27cf8e1db6"
-        };
-
-        let app, db, products = [];
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            initializeAppCheck(app, { provider: new RecaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
-        } catch (error) {
-            console.error('Firebase initialization error:', error);
-            document.getElementById('productsGrid').innerHTML = '<div class="no-products">Failed to load products. Please refresh the page.</div>';
-        }
+    <script src="../api.js"></script>
+    <script>
+        let products = [];
 
         function escapeHtml(text) {
             if (!text) return '';
@@ -148,17 +118,11 @@
 
         async function loadAllProducts() {
             try {
-                const snapshot = await getDocs(collection(db, 'products'));
-                products = [];
-                snapshot.forEach((doc) => {
-                    products.push({ id: doc.id, ...doc.data() });
-                });
-
+                products = await JeframAPI.getProducts();
                 if (products.length === 0) {
                     document.getElementById('productsGrid').innerHTML = '<div class="no-products">No products available at the moment.</div>';
                     return;
                 }
-
                 document.getElementById('productsGrid').innerHTML = '<div class="products-grid">' + products.map(renderProductCard).join('') + '</div>';
             } catch (error) {
                 console.error('Error loading products:', error);
@@ -169,11 +133,9 @@
         window.addToCart = function(productId) {
             const product = products.find(p => p.id === productId);
             if (!product) return;
-
             const discount = Number(product.discount_percent || 0);
             const originalPrice = Number(product.price || 0);
             const unitPrice = discount > 0 ? Math.max(0, Math.round(originalPrice * (1 - discount / 100))) : originalPrice;
-
             const guestCart = JSON.parse(localStorage.getItem('jefram-cart') || '[]');
             const existing = guestCart.find(item => item.id === productId);
             if (existing) {
@@ -191,9 +153,7 @@
             alert('Added to cart!');
         };
 
-        if (db) {
-            loadAllProducts();
-        }
+        loadAllProducts();
     </script>
 </body>
 </html>

@@ -78,6 +78,11 @@
             transform: translateY(-2px);
         }
 
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
         .message {
             margin-top: 20px;
             padding: 10px;
@@ -91,53 +96,34 @@
             color: #721c24;
             display: block;
         }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
         <h2>Admin Login</h2>
         <div class="subtitle">Jefram Stores Dashboard</div>
-        <input type="email" id="username" placeholder="Admin Email">
-        <input type="password" id="password" placeholder="Password">
-        <button onclick="login()">Login</button>
+        <input type="email" id="email" placeholder="Admin Email" autocomplete="email">
+        <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+        <button id="loginBtn" onclick="login()">Login</button>
         <div id="message" class="message"></div>
     </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
-                "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
-                "firebase/app-check": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js"
-            }
-        }
-    </script>
-
-    <script type="module">
-        import { initializeApp } from "firebase/app";
-        import { getFirestore, doc, getDoc } from "firebase/firestore";
-        import { getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
-        import { initializeAppCheck, RecaptchaV3Provider } from "firebase/app-check";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAoNFbS548PhPO1XmfXfDBiSfHzJ5WRvDY",
-            authDomain: "jefram-stores.firebaseapp.com",
-            projectId: "jefram-stores",
-            storageBucket: "jefram-stores.firebasestorage.app",
-            messagingSenderId: "669495715459",
-            appId: "1:669495715459:web:1d6bedbba9dc27cf8e1db6"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        initializeAppCheck(app, { provider: new RecaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
-
+    <script src="../api.js"></script>
+    <script>
         window.login = async function() {
-            const email = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const messageDiv = document.getElementById('message');
+            const loginBtn = document.getElementById('loginBtn');
+
+            messageDiv.className = 'message';
+            messageDiv.textContent = '';
 
             if (!email || !password) {
                 messageDiv.textContent = 'Please enter email and password';
@@ -145,41 +131,28 @@
                 return;
             }
 
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+
             try {
-                const userCred = await signInWithEmailAndPassword(auth, email, password);
-                const uid = userCred.user.uid;
-                // Verify this Firebase Auth user is an admin (admins/{uid} doc).
-                let adminSnap;
-                try {
-                    adminSnap = await getDoc(doc(db, 'admins', uid));
-                } catch (e) {
-                    messageDiv.textContent = `Admin record read denied. In Firestore, create an "admins" document whose Document ID is exactly: ${uid} (then ensure rules are published).`;
-                    messageDiv.className = 'message error';
-                    return;
-                }
-                if (!adminSnap.exists()) {
-                    await signOut(auth);
-                    messageDiv.textContent = `No admin record for this account. In Firestore, create an "admins" document whose Document ID is exactly: ${uid}`;
-                    messageDiv.className = 'message error';
-                    return;
-                }
+                const result = await JeframAPI.adminLogin(email, password);
+                localStorage.setItem('jefram_token', result.token);
+                localStorage.setItem('jefram_user', JSON.stringify(result.user));
                 window.location.href = 'index.html';
             } catch (error) {
-                console.error('Login error:', error);
-                let msg = 'Login failed. Please try again.';
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-email') {
-                    msg = 'Invalid email or password';
-                } else if (error.code === 'auth/operation-not-allowed') {
-                    msg = 'Email/Password sign-in is NOT enabled. Enable it in Firebase Console → Authentication → Sign-in method.';
-                } else if (error.code === 'permission-denied') {
-                    msg = 'Admin record read denied. Ensure the admins/{uid} Document ID exactly matches the Auth user UID and the new rules are deployed.';
-                } else if (error.message) {
-                    msg = error.message;
-                }
-                messageDiv.textContent = msg;
+                messageDiv.textContent = error.message || 'Login failed';
                 messageDiv.className = 'message error';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
             }
         };
+
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                window.login();
+            }
+        });
     </script>
 </body>
 </html>
