@@ -2,7 +2,7 @@ services:
   - type: web
     name: jefram-stores
     runtime: node
-    buildCommand: npm install
+    buildCommand: npm install && npm run migrate
     startCommand: node server.js
     healthCheckPath: /health
     envVars:
@@ -12,6 +12,8 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: PORT
+        value: 10000
     headers:
       - path: /*
         name: X-Frame-Options
