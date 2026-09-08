@@ -1505,12 +1505,27 @@ function initDashboard() {
 window.checkAdminAuth = async function() {
   const token = localStorage.getItem('jefram_token');
   const userStr = localStorage.getItem('jefram_user');
+  
+  console.log('Auth check - Token:', token ? 'exists' : 'missing');
+  console.log('Auth check - User:', userStr ? 'exists' : 'missing');
+  
   if (!token || !userStr) {
+    console.log('Redirecting to login - missing credentials');
     window.location.href = 'login.html';
     return;
   }
   try {
     const user = await JeframAPI.getCurrentUser();
+    console.log('Current user:', user);
+    
+    if (!user || user.role !== 'admin') {
+      console.log('Redirecting to login - not admin or user missing');
+      localStorage.removeItem('jefram_token');
+      localStorage.removeItem('jefram_user');
+      window.location.href = 'login.html';
+      return;
+    }
+    
     currentAdmin = {
       uid: user.id,
       username: user.name || user.email,
@@ -1540,7 +1555,13 @@ window.checkAdminAuth = async function() {
     window.location.href = 'login.html';
   }
 };
-window.checkAdminAuth();
+
+// Call auth check when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Page loaded, checking auth...');
+  window.checkAdminAuth();
+});
+
 window.switchToSection = function(sectionId) {
 const section = document.getElementById(sectionId);
 if (section) {

@@ -1,15 +1,19 @@
 const { Client } = require('pg');
 require('dotenv').config();
 
-const DATABASE_URL = process.env.DATABASE_URL;
-
-if (!DATABASE_URL) {
-  console.error('DATABASE_URL environment variable is required');
-  process.exit(1);
-}
+// Support both DATABASE_URL and individual environment variables
+const clientConfig = process.env.DATABASE_URL 
+  ? { connectionString: process.env.DATABASE_URL }
+  : {
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 5432,
+      database: process.env.DB_NAME || 'jefram_stores',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD,
+    };
 
 async function migrate() {
-  const client = new Client({ connectionString: DATABASE_URL });
+  const client = new Client(clientConfig);
   
   try {
     console.log('Connecting to Render database...');
