@@ -443,7 +443,7 @@ app.post('/api/auth/customer/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     const token = jwt.sign({ id: customer.id, email: customer.email, role: customer.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: customer.id, email: customer.email, name: customer.name, phone: customer.phone } });
+    res.json({ token, user: { id: customer.id, email: customer.email, name: customer.name, phone: customer.phone, registration_promo_code: customer.registration_promo_code } });
   } catch (error) {
     console.error('Customer login error:', error);
     res.status(500).json({ error: 'Login failed' });
@@ -453,7 +453,7 @@ app.post('/api/auth/customer/login', async (req, res) => {
 // Get current user
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, email, name, phone, address, role FROM users WHERE id = $1', [req.user.id]);
+    const result = await pool.query('SELECT id, email, name, phone, address, role, registration_promo_code FROM users WHERE id = $1', [req.user.id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -711,18 +711,25 @@ app.post('/api/orders', authMiddleware, customerOnly, async (req, res) => {
       const couponResult = await client.query(
         `SELECT * FROM coupons
          WHERE UPPER(code) = UPPER($1) AND active = true
-           AND is_registration_promo = false
+           AND (is_registration_promo = false OR (is_registration_promo = true AND UPPER(code) = UPPER((SELECT registration_promo_code FROM users WHERE id = $2))))
            AND (valid_from IS NULL OR valid_from <= NOW())
            AND (valid_until IS NULL OR valid_until >= NOW())
            AND (max_uses IS NULL OR used_count < max_uses)
          FOR UPDATE`,
-        [coupon_code]
+        [coupon_code, req.user.id]
       );
       if (!couponResult.rows.length) {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: 'Coupon is invalid, expired, or fully used' });
       }
       coupon = couponResult.rows[0];
+      if (coupon.is_registration_promo) {
+        const priorOrder = await client.query('SELECT 1 FROM orders WHERE customer_id = $1 LIMIT 1', [req.user.id]);
+        if (priorOrder.rows.length) {
+          await client.query('ROLLBACK');
+          return res.status(409).json({ error: 'Your registration promo is only valid on your first checkout' });
+        }
+      }
       const redemption = await client.query(
         "SELECT id FROM coupon_redemptions WHERE coupon_id = $1 AND user_id = $2 AND redemption_type = 'order'",
         [coupon.id, req.user.id]

@@ -1679,6 +1679,26 @@
         };
 
         // ----- COUPONS -----
+        window.applyRegistrationPromoIfAvailable = async function() {
+            const registrationCode = currentUser && currentUser.registration_promo_code;
+            if (!registrationCode || appliedCoupon) return;
+            try {
+                const coupons = await JeframAPI.getCoupons({ code: registrationCode, active: 'true' });
+                const promo = coupons.find((coupon) => coupon.is_registration_promo);
+                if (!promo) return;
+                appliedCoupon = promo;
+                const discountType = promo.discount_fixed ? 'fixed' : 'percentage';
+                const discountValue = Number(promo.discount_fixed || promo.discount_percent || 0);
+                appliedCoupon.discountType = discountType;
+                appliedCoupon.discountValue = discountValue;
+                const message = document.getElementById('couponMessage');
+                if (message) message.textContent = `Your first-checkout promo is applied: ${discountType === 'percentage' ? discountValue + '%' : 'UGX ' + discountValue.toLocaleString()} off`;
+                window.renderCart();
+            } catch (error) {
+                console.error('Registration promo lookup failed:', error);
+            }
+        };
+
         window.applyCoupon = async function() {
             const code = document.getElementById('couponCode').value.trim().toUpperCase();
             if (!code) { window.showToast('Enter a coupon code', 'error'); return; }
@@ -1686,16 +1706,16 @@
                 const coupons = await JeframAPI.getCoupons({ code: code, active: "true" });
                 if (!coupons.length) { window.showToast('Invalid coupon', 'error'); return; }
                 appliedCoupon = coupons[0];
-                if (appliedCoupon.is_registration_promo) {
+                if (appliedCoupon.is_registration_promo && (!currentUser || currentUser.registration_promo_code !== appliedCoupon.code)) {
                     appliedCoupon = null;
-                    window.showToast('This code is only valid during registration', 'error');
+                    window.showToast('This promo code belongs to another account', 'error');
                     return;
                 }
                 
                 // Handle both field name variations for backward compatibility
                 const expiryDate = appliedCoupon.expiry_date || appliedCoupon.expiryDate;
-                const discountType = appliedCoupon.discountType || (appliedCoupon.discount_percent ? 'percentage' : 'fixed');
-                const discountValue = appliedCoupon.discountValue || appliedCoupon.discount_percent || 0;
+                const discountType = appliedCoupon.discountType || (appliedCoupon.discount_fixed ? 'fixed' : 'percentage');
+                const discountValue = appliedCoupon.discountValue || appliedCoupon.discount_fixed || appliedCoupon.discount_percent || 0;
                 
                 // Normalize the coupon object
                 appliedCoupon.discountType = discountType;
@@ -1709,7 +1729,7 @@
                     window.showToast('Usage limit reached', 'error');
                     return;
                 }
-                document.getElementById('couponMessage').innerHTML = 'Coupon applied! ' + (discountType === 'percentage' ? discountValue + '% off' : 'UGX ' + discountValue.toLocaleString() + ' off');
+                document.getElementById('couponMessage').innerHTML = 'Coupon applied to this order! ' + (discountType === 'percentage' ? discountValue + '% off' : 'UGX ' + discountValue.toLocaleString() + ' off');
                 window.showToast('Coupon applied!', 'success');
                 window.renderCart();
             } catch(e) {
@@ -1720,8 +1740,8 @@
 
         window.calculateDiscount = function(amount) {
             if (!appliedCoupon) return 0;
-            const discountType = appliedCoupon.discountType || (appliedCoupon.discount_percent ? 'percentage' : 'fixed');
-            const discountValue = appliedCoupon.discountValue || appliedCoupon.discount_percent || 0;
+            const discountType = appliedCoupon.discountType || (appliedCoupon.discount_fixed ? 'fixed' : 'percentage');
+            const discountValue = appliedCoupon.discountValue || appliedCoupon.discount_fixed || appliedCoupon.discount_percent || 0;
             return discountType === 'percentage' ?
                 (amount * discountValue) / 100 :
                 Math.min(discountValue, amount);
@@ -2026,11 +2046,13 @@
                     phone: phone,
                     whatsapp: whatsapp || phone,
                     email: email,
+                    registration_promo_code: result.user.registration_promo_code || null,
                     location: location,
                     registeredAt: new Date().toISOString(),
                     wishlist: [],
                     cart: []
                 };
+                if (result.user.registration_promo_code) await window.applyRegistrationPromoIfAvailable();
                 window.showToast('Registration successful!', 'success');
 
                 await window.loadWishlistFromAPI();
@@ -2070,6 +2092,7 @@
                 localStorage.setItem('jefram_user', JSON.stringify(result.user));
                 currentUser = result.user;
                 currentUserDocId = result.user.id;
+                await window.applyRegistrationPromoIfAvailable();
                 window.closeLoginModal();
                 window.showToast('Welcome back!', 'success');
                 window.updateUserUI();
