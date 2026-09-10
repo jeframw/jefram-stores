@@ -1,11 +1,6 @@
 node_modules/
 .DS_Store
 *.log
-.firebase/
 .env
-jefram-stores-firebase-adminsdk-*.json
 .git-rewrite/
 .kilo/
-check-schema.js
-recover-admin.js
-run-migration.js

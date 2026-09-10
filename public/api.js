@@ -37,6 +37,23 @@ window.JeframAPI = {
     body: JSON.stringify({ email, password })
   }),
 
+  productManagerLogin: (email, password) => api('/api/auth/product-manager/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password })
+  }),
+
+  createAdmin: (data) => api('/api/auth/admin/create', {
+    method: 'POST', body: JSON.stringify(data)
+  }),
+
+  createProductManager: (data) => api('/api/auth/product-manager/create', {
+    method: 'POST', body: JSON.stringify(data)
+  }),
+
+  recoverAdmin: (data) => api('/api/auth/admin/recover', {
+    method: 'POST', body: JSON.stringify(data)
+  }),
+
   customerRegister: (data) => api('/api/auth/customer/register', {
     method: 'POST',
     body: JSON.stringify(data)
@@ -94,6 +111,17 @@ window.JeframAPI = {
     body: JSON.stringify({ status })
   }),
 
+  confirmOrder: (id, data) => api(`/api/orders/${id}/confirm`, {
+    method: 'PUT', body: JSON.stringify(data)
+  }),
+
+  getDeliveryAgents: () => api('/api/delivery-agents'),
+  createDeliveryAgent: (data) => api('/api/delivery-agents', { method: 'POST', body: JSON.stringify(data) }),
+  deleteDeliveryAgent: (id) => api(`/api/delivery-agents/${id}`, { method: 'DELETE' }),
+  assignDeliveryAgent: (orderId, delivery_agent_id) => api(`/api/orders/${orderId}/assign-agent`, {
+    method: 'PUT', body: JSON.stringify({ delivery_agent_id })
+  }),
+
   rateOrder: (id, data) => api(`/api/orders/${id}/rating`, {
     method: 'PUT',
     body: JSON.stringify(data)
@@ -125,6 +153,8 @@ window.JeframAPI = {
     method: 'PUT'
   }),
 
+  deleteCoupon: (id) => api(`/api/coupons/${id}`, { method: 'DELETE' }),
+
   // Config
   getConfig: (key) => api(`/api/config/${key}`),
 
@@ -136,9 +166,17 @@ window.JeframAPI = {
   // Users
   getUsers: () => api('/api/users'),
 
+  deleteUser: (id) => api(`/api/users/${id}`, {
+    method: 'DELETE'
+  }),
+
   updateUser: (id, data) => api(`/api/users/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data)
+  }),
+
+  changePassword: (id, data) => api(`/api/users/${id}/password`, {
+    method: 'PUT', body: JSON.stringify(data)
   }),
 
   // Stats

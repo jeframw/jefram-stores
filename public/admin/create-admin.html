@@ -27,7 +27,7 @@
         <input type="text" id="name" placeholder="Admin Name">
         <input type="email" id="email" placeholder="Admin Email">
         <input type="password" id="password" placeholder="Password">
-        <button id="createBtn" onclick="createAdmin()">Create Admin</button>
+        <button id="createBtn" type="button" onclick="createAdmin()">Create Admin</button>
         <div id="message" class="message"></div>
     </div>
 
@@ -59,6 +59,7 @@
             createBtn.textContent = 'Creating...';
 
             try {
+                console.log('Creating admin with:', { name, email });
                 const response = await fetch(window.location.origin + '/api/auth/admin/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -66,6 +67,7 @@
                 });
 
                 const data = await response.json();
+                console.log('Registration response:', response.status, data);
 
                 if (!response.ok) {
                     throw new Error(data.error || 'Failed to create admin');
@@ -77,6 +79,7 @@
                     window.location.href = 'login.html';
                 }, 2000);
             } catch (error) {
+                console.error('Registration error:', error);
                 messageDiv.textContent = error.message;
                 messageDiv.className = 'message error';
             } finally {

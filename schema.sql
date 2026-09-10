@@ -1,5 +1,4 @@
 -- Jefram Stores PostgreSQL Schema
--- Migrated from Firebase Firestore structure
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -7,12 +6,11 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Users table (combines customers and admins)
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    firebase_uid VARCHAR(255) UNIQUE,
     email VARCHAR(255) UNIQUE NOT NULL,
     phone VARCHAR(20) UNIQUE,
     name VARCHAR(255),
     address TEXT,
-    role VARCHAR(20) DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'delivery_agent')),
+    role VARCHAR(20) DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'delivery_agent', 'product_manager')),
     password_hash TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -29,7 +27,6 @@ CREATE TABLE categories (
 -- Products table
 CREATE TABLE products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    firebase_id VARCHAR(255) UNIQUE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     price DECIMAL(10, 2) NOT NULL,
@@ -51,7 +48,6 @@ CREATE TABLE products (
 -- Orders table
 CREATE TABLE orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    firebase_id VARCHAR(255) UNIQUE,
     customer_id UUID REFERENCES users(id),
     order_number VARCHAR(50) UNIQUE,
     total DECIMAL(10, 2) NOT NULL,
@@ -95,7 +91,6 @@ CREATE TABLE order_items (
 -- Reviews table
 CREATE TABLE reviews (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    firebase_id VARCHAR(255) UNIQUE,
     product_id UUID REFERENCES products(id),
     product_name VARCHAR(255),
     user_id UUID REFERENCES users(id),
@@ -108,7 +103,6 @@ CREATE TABLE reviews (
 -- Coupons table
 CREATE TABLE coupons (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    firebase_id VARCHAR(255) UNIQUE,
     code VARCHAR(100) UNIQUE NOT NULL,
     discount_percent INTEGER NOT NULL,
     discount_fixed DECIMAL(10, 2),

@@ -71,7 +71,7 @@
         </div>
     </div>
 
-    <script src="../api.js"></script>
+    <script src="api.js"></script>
     <script type="module">
         let product = null;
         let config = null;
@@ -81,8 +81,8 @@
         let currentUserId = null;
         let currentUnitPrice = 0;
 
-        // Replaces the old custom-session cookie lookup. Uses Firebase Auth so
-        // the reviewer's name + uid are available for the reviews collection.
+        // Replaces the old custom-session cookie lookup. Uses JWT Auth so
+        // the reviewer's name + id are available for the reviews collection.
         async function subscribeCurrentUser() {
             try {
                 const user = await JeframAPI.getCurrentUser();
@@ -96,20 +96,6 @@
                 const nameEl = document.getElementById("reviewUserName");
                 if (nameEl) nameEl.textContent = currentUserName;
             }
-        }
-                currentUserId = user.uid;
-                try {
-                    const snap = await JeframAPI.getCurrentUser();
-                    if (snap.exists() && snap.data().name) {
-                        currentUserName = snap.data().name;
-                    } else if (user.email) {
-                        currentUserName = user.email.split('@')[0];
-                    }
-                } catch (e) {
-                    console.error('Error loading customer profile:', e);
-                }
-                if (nameEl) nameEl.textContent = currentUserName;
-            });
         }
 
         function escapeHtml(text) {
@@ -424,18 +410,18 @@
             container.innerHTML = '<div class="loader">Loading product...</div>';
 
             try {
-                const productDoc = await JeframAPI.getCurrentUser();
-                if (!productDoc.exists()) {
+                const productData = await JeframAPI.getProduct(productId);
+                if (!productData) {
                     container.innerHTML = '<div class="loader">Product not found.</div>';
                     return;
                 }
 
-                product = { id: productDoc.id, ...productDoc.data() };
-                const configDoc = await JeframAPI.getCurrentUser();
-                if (configDoc.exists()) config = configDoc.data();
+                product = productData;
+                const configDoc = await JeframAPI.getConfig('store');
+                config = configDoc || null;
 
                 const reviews = await JeframAPI.getReviews({ product_id: productId });
-                reviews.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+                reviews.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
                 const images = getImages(product);
                 const saleEntry = getFlashSaleEntry(product);
@@ -536,6 +522,6 @@
         updateCartCount();
         subscribeCurrentUser();
     </script>
-    <script src="../api.js"></script>
+    <script src="api.js"></script>
 </body>
 </html>

@@ -34,7 +34,6 @@ async function migrate() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        firebase_uid VARCHAR(255) UNIQUE,
         email VARCHAR(255) UNIQUE NOT NULL,
         phone VARCHAR(20) UNIQUE,
         name VARCHAR(255),
@@ -60,7 +59,6 @@ async function migrate() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS products (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        firebase_id VARCHAR(255) UNIQUE,
         name VARCHAR(255) NOT NULL,
         description TEXT,
         price DECIMAL(10, 2) NOT NULL,
@@ -84,7 +82,6 @@ async function migrate() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS orders (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        firebase_id VARCHAR(255) UNIQUE,
         customer_id UUID REFERENCES users(id),
         order_number VARCHAR(50) UNIQUE,
         total DECIMAL(10, 2) NOT NULL,
@@ -133,7 +130,6 @@ async function migrate() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS reviews (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        firebase_id VARCHAR(255) UNIQUE,
         product_id UUID REFERENCES products(id),
         product_name VARCHAR(255),
         user_id UUID REFERENCES users(id),
@@ -148,7 +144,6 @@ async function migrate() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS coupons (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        firebase_id VARCHAR(255) UNIQUE,
         code VARCHAR(100) UNIQUE NOT NULL,
         discount_percent INTEGER NOT NULL,
         discount_fixed DECIMAL(10, 2),

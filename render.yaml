@@ -9,9 +9,12 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: jefram-stores-db
+          property: connectionString
       - key: JWT_SECRET
         sync: false
+        generateValue: true
       - key: PORT
         value: 10000
     headers:
@@ -21,3 +24,8 @@ services:
       - path: /*
         name: X-Content-Type-Options
         value: nosniff
+
+databases:
+  - name: jefram-stores-db
+    databaseName: jefram_stores
+    user: jefram_user

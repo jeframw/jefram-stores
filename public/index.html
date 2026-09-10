@@ -814,6 +814,7 @@
                 <input type="email" id="loginPhone" placeholder="Email" required>
                 <input type="password" id="loginPassword" placeholder="Password" required>
                 <button onclick="window.loginUser()" style="background: #667eea; color: white; padding: 12px; border: none; border-radius: 8px;">Sign In</button>
+                <div id="customerLoginError" role="alert" style="display:none; margin-top:10px; padding:10px; color:#a61b1b; background:#fee2e2; border:1px solid #fecaca; border-radius:6px;"></div>
             </div>
             <p style="margin-top: 10px; text-align: center;">Don't have an account? <a href="#" onclick="window.closeLoginModal(); window.openRegisterModal();" style="color: #667eea;">Register</a></p>
             <p style="margin-top: 5px; text-align: center;"><a href="#" onclick="window.closeLoginModal(); window.openPasswordResetModal();" style="color: #667eea; font-size: 14px;">Forgot Password?</a></p>
@@ -854,8 +855,8 @@
         </div>
     </div>
 
-    <script src="../api.js"></script>
-    <script type="module">
+    <script src="api.js"></script>
+    <script>
         // Global variables
         let products = [];
         let cart = [];
@@ -1068,29 +1069,13 @@
             window.updateWishlistButtons();
         };
 
+        // Wishlists remain local until a wishlist column is added to the API.
         window.saveWishlistToAPI = async function() {
-                const user = await JeframAPI.getCurrentUser();
-                await JeframAPI.updateUser(user.id, { wishlist: cleanWishlist });
-            }));
-                
-                wishlist = cleanWishlist;
-                window.saveWishlistToLocalStorage();
-                
-                await JeframAPI.updateUser(currentUserDocId, data);
-            } catch(e) { 
-                console.error('Error saving wishlist:', e);
-            }
+            window.saveWishlistToLocalStorage();
         };
 
         window.loadWishlistFromAPI = async function() {
-                const user = await JeframAPI.getCurrentUser();
-                const data = await JeframAPI.getCurrentUser();
-                return data.wishlist || [];
-            }
-                }
-            } catch(e) { 
-                console.error('Error loading wishlist:', e);
-            }
+            return JSON.parse(localStorage.getItem('jefram-wishlist') || '[]');
         };
 
         window.removeFromWishlist = async function(productId) {
@@ -1133,7 +1118,8 @@
         };
 
         window.saveWishlistToLocalStorage = function() {
-            };
+            localStorage.setItem('jefram-wishlist', JSON.stringify(wishlist || []));
+        };
 
         window.addToCartFromWishlist = function(productId) {
             window.addToCart(productId);
@@ -1141,12 +1127,8 @@
         };
 
         window.mergeWishlistIntoAPI = async function() {
-                const user = await JeframAPI.getCurrentUser();
-                await JeframAPI.updateUser(user.id, { wishlist: mergedWishlist });
-            }
-            });
+            window.loadWishlistFromLocalStorage();
             await window.saveWishlistToAPI();
-            localStorage.removeItem('jefram-wishlist');
         };
 
         window.openWishlist = function() {
@@ -1436,40 +1418,15 @@
 
         // ----- CART WITH SIZE SUPPORT -----
         window.saveCartToAPI = async function() {
-                const user = await JeframAPI.getCurrentUser();
-                await JeframAPI.updateUser(user.id, { cart: cart });
-            });
-            } catch(e) { console.error('Error saving cart:', e); }
+            localStorage.setItem('jefram-cart', JSON.stringify(cart || []));
         };
 
         window.loadCartFromAPI = async function() {
-                const user = await JeframAPI.getCurrentUser();
-                const data = await JeframAPI.getCurrentUser();
-                return data.cart || [];
-            }
-            } catch(e) { console.error('Error loading cart:', e); }
+            return JSON.parse(localStorage.getItem('jefram-cart') || '[]');
         };
 
         window.mergeGuestCartIntoAPI = async function() {
-                const user = await JeframAPI.getCurrentUser();
-                await JeframAPI.updateUser(user.id, { cart: cart });
-            } else {
-                    const product = (products || []).find(p => p.id === item.id);
-                    const discount = Number(product?.discount_percent || 0);
-                    const originalPrice = Number(item.price || product?.price || 0);
-                    const unitPrice = discount > 0 ? Math.max(0, Math.round(originalPrice * (1 - discount / 100))) : originalPrice;
-                    mergedCart.push({
-                        id: item.id,
-                        name: item.name,
-                        price: unitPrice,
-                        quantity: Number(item.quantity || 0) || 1,
-                        selectedSize: item.selectedSize || null,
-                        image_url: item.image || item.image_url || 'https://via.placeholder.com/150'
-                    });
-                }
-            });
-            cart = mergedCart;
-            localStorage.removeItem('jefram-cart');
+            cart = JSON.parse(localStorage.getItem('jefram-cart') || '[]');
             await window.saveCartToAPI();
             window.updateCartCount();
         };
@@ -1700,8 +1657,8 @@
             if (!code) { window.showToast('Enter a coupon code', 'error'); return; }
             try {
                 const coupons = await JeframAPI.getCoupons({ code: code, active: "true" });
-                if (snapshot.empty) { window.showToast('Invalid coupon', 'error'); return; }
-                snapshot.forEach(doc => { appliedCoupon = { id: doc.id, ...doc.data() }; });
+                if (!coupons.length) { window.showToast('Invalid coupon', 'error'); return; }
+                appliedCoupon = coupons[0];
                 
                 // Handle both field name variations for backward compatibility
                 const expiryDate = appliedCoupon.expiry_date || appliedCoupon.expiryDate;
@@ -1716,7 +1673,7 @@
                     window.showToast('Coupon expired', 'error');
                     return;
                 }
-                if (appliedCoupon.usageLimit && appliedCoupon.usedCount >= appliedCoupon.usageLimit) {
+                if (appliedCoupon.max_uses && appliedCoupon.used_count >= appliedCoupon.max_uses) {
                     window.showToast('Usage limit reached', 'error');
                     return;
                 }
@@ -1831,21 +1788,7 @@
                     await JeframAPI.updateCouponUsage(appliedCoupon.id);
                 }
                 
-                for (const item of cart) {
-                    const product = await JeframAPI.getProduct(item.id);
-                if (product) {;
-                                }
-                                return s;
-                            });
-                            const newTotalStock = updatedSizes.reduce((sum, s) => sum + s.stock, 0);
-                            await JeframAPI.updateProduct(item.id, { sizes: updatedSizes, stock: newTotalStock });
-                        } else {
-                            await JeframAPI.updateProduct(item.id, { stock: Math.max(0, (productData.stock || 0) - item.quantity) });
-                        }
-                    }
-                }
-                
-                const orderId = orderRef.id;
+                const orderId = order.id;
                 const confirmationDetails = `
                     <strong>Order #:</strong> ${orderId.slice(-6)}<br>
                     <strong>Tracking #:</strong> ${trackingNumber}<br>
@@ -1923,11 +1866,9 @@
             try {
                 const reviews = await JeframAPI.getReviews({ product_id: productId, limit: 3 });
                 let html = '<div class="reviews-section">';
-                if (!snapshot.empty) {
+                if (reviews.length) {
                     html += '<strong>Reviews:</strong>';
-                    const reviews = [];
-                    snapshot.forEach(doc => { reviews.push(doc.data()); });
-                    reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    reviews.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                     reviews.forEach(r => {
                         html += '<div class="review-item"><div class="review-rating">' + '⭐'.repeat(r.rating) + '</div><div class="review-text">"' + window.escapeHtml(r.comment) + '"</div><small>- ' + window.escapeHtml(r.userName) + '</small></div>';
                     });
@@ -2085,14 +2026,29 @@
             }
         };
 
-                window.loginUser = async function() {
-            if (!db || !auth) { window.showToast('Database not connected', 'error'); return; }
+        window.loginUser = async function() {
+            const errorEl = document.getElementById('customerLoginError');
+            errorEl.style.display = 'none';
             const email = document.getElementById('loginPhone').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
-            if (!email || !password) { window.showToast('Enter email and password', 'error'); return; }
-            else {
-                    window.showToast('Login failed: ' + e.message, 'error');
-                }
+            if (!email || !password) {
+                errorEl.textContent = 'Please enter your email and password.';
+                errorEl.style.display = 'block';
+                return;
+            }
+            try {
+                const result = await JeframAPI.customerLogin(email, password);
+                localStorage.setItem('jefram_token', result.token);
+                localStorage.setItem('jefram_user', JSON.stringify(result.user));
+                currentUser = result.user;
+                currentUserDocId = result.user.id;
+                window.closeLoginModal();
+                window.showToast('Welcome back!', 'success');
+                window.updateUserUI();
+            } catch (e) {
+                errorEl.textContent = 'Invalid email or password. Please try again.';
+                errorEl.style.display = 'block';
+                document.getElementById('loginPassword').focus();
             }
         };
         window.openLoginModal = function() { document.getElementById('loginModal').style.display = 'flex'; };
@@ -2240,8 +2196,8 @@
             ['currentPassword', 'newPassword', 'confirmPassword'].forEach(id => document.getElementById(id).value = '');
         };
 
-                window.changePassword = async function() {
-            if (!auth || !auth.currentUser) { window.showToast('Please sign in again', 'error'); return; }
+        window.changePassword = async function() {
+            if (!currentUserDocId) { window.showToast('Please sign in again', 'error'); return; }
             const currentPassword = document.getElementById('currentPassword').value;
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
@@ -2259,11 +2215,12 @@
                 return;
             }
 
-            else if (error.code === 'auth/requires-recent-login') {
-                    window.showToast('Please sign out and sign in again, then retry', 'error');
-                } else {
-                    window.showToast('Failed to update password: ' + error.message, 'error');
-                }
+            try {
+                await JeframAPI.changePassword(currentUserDocId, { password: newPassword, currentPassword });
+                window.showToast('Password updated successfully', 'success');
+                window.cancelChangePassword();
+            } catch (error) {
+                window.showToast('Failed to update password: ' + error.message, 'error');
             }
         };
 
@@ -2286,13 +2243,6 @@
                 await JeframAPI.updateUser(currentUserDocId, updateData);
                 currentUser = { ...currentUser, name: newName, phone: newPhone, whatsapp: newWhatsapp, location: newLocation, email: newEmail };
 
-                                if (newEmail && auth && auth.currentUser && newEmail !== auth.currentUser.email) {
-                    else {
-                            window.showToast('Profile updated, but email not changed: ' + emailErr.message, 'success');
-                        }
-                    }
-                }
-
                 window.showToast('Profile updated!', 'success');
                 window.cancelEdit();
                 window.loadProfileData();
@@ -2309,15 +2259,14 @@
             ordersList.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
             try {
                 const orders = await JeframAPI.getOrders();
-                if (snapshot.empty) { ordersList.innerHTML = '<div style="text-align:center; padding:2rem;">No orders found</div>'; return; }
+                if (!orders.length) { ordersList.innerHTML = '<div style="text-align:center; padding:2rem;">No orders found</div>'; return; }
                 let html = '';
-                snapshot.forEach(doc => {
-                    const o = doc.data();
+                orders.forEach(o => {
                     const itemsWithSizes = o.items.map(i => i.name + (i.selectedSize ? ' (' + i.selectedSize + ')' : '') + ' x' + i.quantity).join(', ');
                     
                     const canCancel = o.status === 'pending' || o.status === 'pending_payment';
                     const cancelButton = canCancel ? 
-                        '<button onclick="window.cancelOrder(\'' + doc.id + '\')" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:5px; font-size:12px;">Cancel Order</button>' : '';
+                        '<button onclick="window.cancelOrder(\'' + o.id + '\')" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:5px; font-size:12px;">Cancel Order</button>' : '';
                     
                     const trackingDisplay = o.tracking_number ? 
                         '<div style="margin-top:8px; padding:8px; background:#e8f0fe; border-radius:6px; border-left:3px solid #667eea;">' +
@@ -2389,7 +2338,7 @@
                     html +=
                         '<div class="order-card">' +
                         '<div class="order-header">' +
-                        '<span><strong>#' + doc.id.slice(-6) + '</strong></span>' +
+                        '<span><strong>#' + o.id.slice(-6) + '</strong></span>' +
                         '<span class="order-status status-' + o.status + '">' + o.status.toUpperCase() + '</span>' +
                         ratingBadge +
                         '</div>' +
@@ -2439,14 +2388,12 @@
             trackingInfo.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
             try {
                 const orders = await JeframAPI.getOrders();
-                if (snapshot.empty) { 
+                if (!orders.length) { 
                     trackingInfo.innerHTML = '<div style="text-align:center; padding:2rem;">No orders to track</div>'; 
                     return; 
                 }
                 
-                const orders = [];
-                snapshot.forEach(doc => orders.push({ id: doc.id, ...doc.data() }));
-                orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                 
                 const activeOrder = orders.find(o => (window.trackingSelectedId && o.id === window.trackingSelectedId) || (!window.trackingSelectedId && o.status !== 'delivered' && o.status !== 'cancelled')) || orders[0];
                 
@@ -2548,17 +2495,11 @@
 
         // ----- RECENTLY VIEWED -----
         window.saveRecentlyViewedToAPI = async function() {
-                const user = await JeframAPI.getCurrentUser();
-                await JeframAPI.updateUser(user.id, { recentlyViewed: recentlyViewed });
-            } catch(e) { console.error('Error saving recently viewed:', e); }
+            localStorage.setItem('jefram-recently-viewed', JSON.stringify(recentlyViewed || []));
         };
 
         window.loadRecentlyViewedFromAPI = async function() {
-                const user = await JeframAPI.getCurrentUser();
-                const data = await JeframAPI.getCurrentUser();
-                return data.recentlyViewed || [];
-            }
-            } catch(e) { console.error('Error loading recently viewed:', e); }
+            return JSON.parse(localStorage.getItem('jefram-recently-viewed') || '[]');
         };
 
         window.addToRecentlyViewed = async function(product) {
@@ -2667,50 +2608,17 @@
         function startDiscountTimer() {
             const timerElement = document.getElementById('discountTimer');
             const displayElement = document.getElementById('timerDisplay');
-            
-            if (!db) {
-                console.warn('Database not initialized, timer disabled');
-                return;
-            }
-            
-            try {
-                setInterval(() => loadConfig(), 5000)
-                            
-                            timerElement.style.display = 'block';
-                            
-                            if (discountTimerInterval) clearInterval(discountTimerInterval);
-                            
-                            discountTimerInterval = setInterval(() => {
-                                const now = Date.now();
-                                const diff = timerEndTime - now;
-                                
-                                if (diff <= 0) {
-                                    clearInterval(discountTimerInterval);
-                                    timerElement.style.display = 'none';
-                                    return;
-                                }
-                                
-                                const hours = Math.floor(diff / (1000 * 60 * 60));
-                                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                                
-                                displayElement.textContent = 
-                                    String(hours).padStart(2, '0') + ':' + 
-                                    String(minutes).padStart(2, '0') + ':' + 
-                                    String(seconds).padStart(2, '0');
-                            }, 1000);
-                        } else {
-                            timerElement.style.display = 'none';
-                        }
-                    } else {
-                        timerElement.style.display = 'none';
-                    }
-                }, (error) => {
-                    console.error('Timer listener error:', error);
-                });
-            } catch (error) {
-                console.error('Error setting up timer listener:', error);
-            }
+            if (!timerElement || !displayElement || !timerEndTime) return;
+            if (discountTimerInterval) clearInterval(discountTimerInterval);
+            discountTimerInterval = setInterval(() => {
+                const diff = timerEndTime - Date.now();
+                if (diff <= 0) { clearInterval(discountTimerInterval); timerElement.style.display = 'none'; return; }
+                timerElement.style.display = 'block';
+                const hours = Math.floor(diff / 3600000);
+                const minutes = Math.floor((diff % 3600000) / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+                displayElement.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }, 1000);
         }
 
         // ----- FLASH SALES -----
@@ -3223,28 +3131,10 @@
         }
 
         window.fetchProducts = async function() {
-            if (!db) {
-                console.error('Database not initialized');
-                return;
-            }
             const grid = document.getElementById('productsRoll');
             if (grid) grid.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-            if (cachedProducts) {
-                    products = cachedProducts;
-                    categories = [...new Set(products.map(p => p.category).filter(c => c))];
-                    renderBrands();
-                    window.renderCategories();
-                    await window.renderProducts();
-                    await window.renderFlashSales();
-                    await window.renderTopSelling();
-                    renderRecentlyViewed();
-                    startDiscountTimer();
-                    // Fetch fresh data in background
-                    fetchFreshProducts();
-                    return;
-                }
-
-                                await fetchFreshProducts();
+            try {
+                await fetchFreshProducts();
             } catch (error) {
                 console.error('Error fetching products:', error);
                 if (grid) grid.innerHTML = '<div style="text-align:center; padding:2rem; color:red;">Failed to load products. Please refresh the page.</div>';
@@ -3253,17 +3143,10 @@
         };
 
         async function fetchFreshProducts() {
-            if (!db) return;
             try {
-                const products = await JeframAPI.getProducts({ limit: 50 });
-                products = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data.hasSizes && !data.sizes) data.sizes = [];
-                    products.push({ id: doc.id, ...data });
-                });
-                // Cache the products (with error handling)
-                categories = [...new Set(products.map(p => p.category).filter(c => c))];
+                products = await JeframAPI.getProducts({ limit: 50 });
+                products = products.map(product => ({ ...product, sizes: product.sizes || [], image_urls: product.image_urls || [] }));
+                categories = [...new Set(products.map(p => p.category).filter(Boolean))];
                 renderBrands();
                 window.renderCategories();
                 await window.renderProducts();
@@ -3279,19 +3162,9 @@
         }
 
         window.loadConfig = async function() {
-            if (!db) {
-                console.warn('Database not initialized for config');
-                return;
-            }
-            if (cachedConfig) {
-                    applyConfig(cachedConfig);
-                }
-
-                                const docSnap = await JeframAPI.getConfig("store");
-                if (docSnap.exists()) {
-                    const config = docSnap.data();
-                    applyConfig(config);
-                }
+            try {
+                const config = await JeframAPI.getConfig('store');
+                applyConfig(config.value || {});
             } catch (error) {
                 console.error('Error loading config:', error);
             }
@@ -3350,7 +3223,7 @@
             loadAdverts(config);
         }
 
-        // ----- AUTH STATE (Firebase Auth) -----
+        // ----- AUTH STATE (JWT Auth) -----
                 // signed-in customer on page load and keeps profile/cart/wishlist in sync.
         window.handleAuthState = async function(user) {
             if (!user) {
@@ -3359,35 +3232,11 @@
                 window.updateCartCount();
                 return;
             }
-            if (isRegistering) {
-                currentUserDocId = user.uid;
-                return;
-            }
             try {
-                currentUserDocId = user.uid;
                 const userData = await JeframAPI.getCurrentUser();
-                if (userData) { else {
-                    currentUser = {
-                        name: user.email ? user.email.split('@')[0] : 'Customer',
-                        email: user.email,
-                        phone: '',
-                        whatsapp: '',
-                        location: '',
-                        wishlist: [],
-                        cart: [],
-                        registeredAt: new Date().toISOString()
-                    };
-                    }
-                await window.loadWishlistFromAPI();
-                await window.mergeWishlistIntoAPI();
-                await window.mergeGuestCartIntoAPI();
-                await window.loadCartFromAPI();
-                await window.loadRecentlyViewedFromAPI();
+                currentUser = userData;
+                currentUserDocId = userData.id;
                 window.updateCartCount();
-                if (currentUser && !user.emailVerified) {
-                    const banner = document.getElementById('emailVerificationBanner');
-                    if (banner) banner.style.display = 'block';
-                }
             } catch (error) {
                 console.error('Auth state error:', error);
             }

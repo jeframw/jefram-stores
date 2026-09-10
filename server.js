@@ -8,11 +8,15 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'random_secret_string_for_security_789';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET || JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET must be set to a secure value of at least 32 characters.');
+}
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://jefram-stores.onrender.com', 'http://127.0.0.1:5500'],
+  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : false,
   credentials: true
 }));
 app.use(express.json());
@@ -67,6 +71,42 @@ const customerOnly = async (req, res, next) => {
   next();
 };
 
+const productManagerOnly = async (req, res, next) => {
+  if (!['admin', 'product_manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Product manager access required' });
+  }
+  next();
+};
+
+async function resolveCategoryId(categoryId, category) {
+  if (categoryId !== undefined && categoryId !== null && categoryId !== '') {
+    const parsedId = Number(categoryId);
+    if (Number.isInteger(parsedId) && parsedId > 0) return parsedId;
+  }
+  if (!category || !String(category).trim()) return null;
+  const categoryName = String(category).trim();
+  const existing = await pool.query('SELECT id FROM categories WHERE LOWER(name) = LOWER($1)', [categoryName]);
+  if (existing.rows.length > 0) return existing.rows[0].id;
+  const created = await pool.query(
+    'INSERT INTO categories (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id',
+    [categoryName]
+  );
+  return created.rows[0].id;
+}
+
+function productResponse(row) {
+  const sizes = Array.isArray(row.sizes) ? row.sizes : [];
+  const imageUrls = Array.isArray(row.image_urls) ? row.image_urls : [];
+  return {
+    ...row,
+    category: row.category_name || row.category || null,
+    sizes,
+    hasSizes: sizes.length > 0,
+    image_urls: imageUrls,
+    image_url: imageUrls[0] || null
+  };
+}
+
 // ==================== AUTH ROUTES ====================
 
 // Admin login
@@ -76,7 +116,7 @@ app.post('/api/auth/admin/login', async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
-    const result = await pool.query('SELECT * FROM users WHERE email = $1 AND role = $2', [email, 'admin']);
+    const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND role = $2', [email, 'admin']);
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
@@ -130,19 +170,69 @@ app.post('/api/auth/admin/create', authMiddleware, adminOnly, async (req, res) =
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Username, email and password are required' });
     }
-    const existing = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const existing = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
     if (existing.rows.length > 0) {
       return res.status(400).json({ error: 'Email already registered' });
     }
     const password_hash = await bcrypt.hash(password, 10);
     const result = await pool.query(
       'INSERT INTO users (email, password_hash, name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, name, role, created_at',
-      [email, password_hash, username, role || 'subadmin']
+      [email, password_hash, username, 'admin']
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Admin create error:', error);
     res.status(500).json({ error: 'Failed to create admin' });
+  }
+});
+
+// Product Manager login
+app.post('/api/auth/product-manager/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND role = $2', [email, 'product_manager']);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    const manager = result.rows[0];
+    if (!manager.password_hash) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    const valid = await bcrypt.compare(password, manager.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    const token = jwt.sign({ id: manager.id, email: manager.email, role: manager.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: manager.id, email: manager.email, name: manager.name, role: manager.role } });
+  } catch (error) {
+    console.error('Product manager login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Create product manager (admin only)
+app.post('/api/auth/product-manager/create', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email and password are required' });
+    }
+    const existing = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+    const password_hash = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, email, name, role, created_at',
+      [name, email, password_hash, 'product_manager']
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Product manager create error:', error);
+    res.status(500).json({ error: 'Failed to create product manager' });
   }
 });
 
@@ -156,13 +246,13 @@ app.post('/api/auth/admin/recover', authMiddleware, adminOnly, async (req, res) 
     const existing = await pool.query('SELECT * FROM users WHERE id = $1', [uid]);
     let userId;
     if (existing.rows.length > 0) {
-      await pool.query('UPDATE users SET name = $1, email = $2, role = $3 WHERE id = $4', [username, email, role || 'subadmin', uid]);
+      await pool.query('UPDATE users SET name = $1, email = $2, role = $3 WHERE id = $4', [username, email, 'admin', uid]);
       userId = uid;
     } else {
       const password_hash = await bcrypt.hash('changeme123', 10);
       const result = await pool.query(
         'INSERT INTO users (id, email, password_hash, name, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, name, role, created_at',
-        [uid, email, password_hash, username, role || 'subadmin']
+        [uid, email, password_hash, username, 'admin']
       );
       userId = result.rows[0].id;
     }
@@ -181,7 +271,7 @@ app.post('/api/auth/customer/register', async (req, res) => {
     if (!email || !password || !name) {
       return res.status(400).json({ error: 'Name, email and password are required' });
     }
-    const existing = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const existing = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
     if (existing.rows.length > 0) {
       return res.status(400).json({ error: 'Email already registered' });
     }
@@ -205,7 +295,7 @@ app.post('/api/auth/customer/login', async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
-    const result = await pool.query('SELECT * FROM users WHERE email = $1 AND role = $2', [email, 'customer']);
+    const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND role = $2', [email, 'customer']);
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
@@ -244,13 +334,13 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
 app.get('/api/products', async (req, res) => {
   try {
     const { category, limit, featured, flash_sale, search } = req.query;
-    let query = 'SELECT * FROM products WHERE 1=1';
+    let query = 'SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE 1=1';
     const params = [];
     let paramCount = 0;
 
     if (category) {
       paramCount++;
-      query += ` AND category_id = $${paramCount}`;
+      query += ` AND p.category_id = $${paramCount}`;
       params.push(category);
     }
 
@@ -277,7 +367,7 @@ app.get('/api/products', async (req, res) => {
     }
 
     const result = await pool.query(query, params);
-    res.json(result.rows);
+    res.json(result.rows.map(productResponse));
   } catch (error) {
     console.error('Error fetching products:', error);
     res.status(500).json({ error: 'Failed to fetch products' });
@@ -287,45 +377,60 @@ app.get('/api/products', async (req, res) => {
 app.get('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
+    const result = await pool.query('SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE p.id = $1', [id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Product not found' });
     }
-    res.json(result.rows[0]);
+    res.json(productResponse(result.rows[0]));
   } catch (error) {
     console.error('Error fetching product:', error);
     res.status(500).json({ error: 'Failed to fetch product' });
   }
 });
 
-app.post('/api/products', authMiddleware, adminOnly, async (req, res) => {
+app.post('/api/products', authMiddleware, productManagerOnly, async (req, res) => {
   try {
     const {
       name, description, price, old_price, stock, category_id,
-      brand, sizes, image_urls, discount_percent, is_featured, is_flash_sale
+      brand, sizes, image_urls, image_url, discount_percent, is_featured, is_flash_sale,
+      category
     } = req.body;
+    const resolvedCategoryId = await resolveCategoryId(category_id, category);
+    const imageUrls = Array.isArray(image_urls) ? image_urls.filter(Boolean).slice(0, 6) : (image_url ? [image_url] : []);
 
     const result = await pool.query(
       `INSERT INTO products (name, description, price, old_price, stock, category_id, brand, sizes, image_urls, discount_percent, is_featured, is_flash_sale)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
-      [name, description, price, old_price, stock, category_id, brand, JSON.stringify(sizes || []), JSON.stringify(image_urls || []), discount_percent, is_featured, is_flash_sale]
+      [name, description, price, old_price, stock, resolvedCategoryId, brand, JSON.stringify(sizes || []), JSON.stringify(imageUrls), discount_percent || 0, is_featured || false, is_flash_sale || false]
     );
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(productResponse(result.rows[0]));
   } catch (error) {
     console.error('Error creating product:', error);
     res.status(500).json({ error: 'Failed to create product' });
   }
 });
 
-app.put('/api/products/:id', authMiddleware, adminOnly, async (req, res) => {
+app.put('/api/products/:id', authMiddleware, productManagerOnly, async (req, res) => {
   try {
     const { id } = req.params;
     const {
       name, description, price, old_price, stock, category_id,
-      brand, sizes, image_urls, discount_percent, is_featured, is_flash_sale
+      brand, sizes, image_urls, image_url, discount_percent, is_featured, is_flash_sale,
+      category, in_flash_sale
     } = req.body;
+    const resolvedCategoryId = await resolveCategoryId(category_id, category);
+    const existing = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
+    if (existing.rows.length === 0) return res.status(404).json({ error: 'Product not found' });
+    const current = existing.rows[0];
+    const imageUrls = Array.isArray(image_urls)
+      ? image_urls.filter(Boolean).slice(0, 6)
+      : (image_url ? [image_url] : current.image_urls || []);
+    const categoryValue = resolvedCategoryId || current.category_id;
+    const flashSaleValue = is_flash_sale === undefined
+      ? (in_flash_sale === undefined ? current.is_flash_sale : in_flash_sale)
+      : is_flash_sale;
 
     const result = await pool.query(
       `UPDATE products 
@@ -334,21 +439,33 @@ app.put('/api/products/:id', authMiddleware, adminOnly, async (req, res) => {
            discount_percent = $10, is_featured = $11, is_flash_sale = $12
        WHERE id = $13
        RETURNING *`,
-      [name, description, price, old_price, stock, category_id, brand, JSON.stringify(sizes || []), JSON.stringify(image_urls || []), discount_percent, is_featured, is_flash_sale, id]
+      [name === undefined ? current.name : name,
+        description === undefined ? current.description : description,
+        price === undefined ? current.price : price,
+        old_price === undefined ? current.old_price : old_price,
+        stock === undefined ? current.stock : stock,
+        categoryValue,
+        brand === undefined ? current.brand : brand,
+        JSON.stringify(sizes === undefined ? current.sizes || [] : sizes),
+        JSON.stringify(imageUrls),
+        discount_percent === undefined ? current.discount_percent : discount_percent,
+        is_featured === undefined ? current.is_featured : is_featured,
+        flashSaleValue,
+        id]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    res.json(result.rows[0]);
+    res.json(productResponse(result.rows[0]));
   } catch (error) {
     console.error('Error updating product:', error);
     res.status(500).json({ error: 'Failed to update product' });
   }
 });
 
-app.delete('/api/products/:id', authMiddleware, adminOnly, async (req, res) => {
+app.delete('/api/products/:id', authMiddleware, productManagerOnly, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING *', [id]);
@@ -374,7 +491,7 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
-app.post('/api/categories', authMiddleware, adminOnly, async (req, res) => {
+app.post('/api/categories', authMiddleware, productManagerOnly, async (req, res) => {
   try {
     const { name, description } = req.body;
     const result = await pool.query(
@@ -390,31 +507,19 @@ app.post('/api/categories', authMiddleware, adminOnly, async (req, res) => {
 
 // ==================== ORDERS ====================
 
-app.get('/api/orders', authMiddleware, async (req, res) => {
+app.get('/api/orders', authMiddleware, adminOnly, async (req, res) => {
   try {
-    if (req.user.role === 'admin') {
-      const result = await pool.query(
-        `SELECT o.*, 
-                json_agg(json_build_object('id', oi.id, 'product_id', oi.product_id, 'product_name', oi.product_name, 'quantity', oi.quantity, 'price', oi.price, 'size', oi.size)) as items
-         FROM orders o
-         LEFT JOIN order_items oi ON o.id = oi.order_id
-         GROUP BY o.id
-         ORDER BY o.created_at DESC`
-      );
-      res.json(result.rows);
-    } else {
-      const result = await pool.query(
-        `SELECT o.*, 
-                json_agg(json_build_object('id', oi.id, 'product_id', oi.product_id, 'product_name', oi.product_name, 'quantity', oi.quantity, 'price', oi.price, 'size', oi.size)) as items
-         FROM orders o
-         LEFT JOIN order_items oi ON o.id = oi.order_id
-         WHERE o.customer_id = $1
-         GROUP BY o.id
-         ORDER BY o.created_at DESC`,
-        [req.user.id]
-      );
-      res.json(result.rows);
-    }
+    const result = await pool.query(
+      `SELECT o.*, 
+              json_agg(json_build_object('id', oi.id, 'product_id', oi.product_id, 'product_name', oi.product_name, 'quantity', oi.quantity, 'price', oi.price, 'size', oi.size)) as items,
+              json_build_object('name', u.name, 'phone', u.phone) as customer
+       FROM orders o
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN users u ON o.customer_id = u.id
+       GROUP BY o.id, u.name, u.phone
+       ORDER BY o.created_at DESC`
+    );
+    res.json(result.rows);
   } catch (error) {
     console.error('Error fetching orders:', error);
     res.status(500).json({ error: 'Failed to fetch orders' });
@@ -635,7 +740,12 @@ app.put('/api/coupons/:id/usage', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      'UPDATE coupons SET used_count = used_count + 1 WHERE id = $1 RETURNING *',
+      `UPDATE coupons SET used_count = used_count + 1
+       WHERE id = $1 AND active = true
+         AND (valid_from IS NULL OR valid_from <= NOW())
+         AND (valid_until IS NULL OR valid_until >= NOW())
+         AND (max_uses IS NULL OR used_count < max_uses)
+       RETURNING *`,
       [id]
     );
 
@@ -650,14 +760,29 @@ app.put('/api/coupons/:id/usage', authMiddleware, async (req, res) => {
   }
 });
 
+app.delete('/api/coupons/:id', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM coupons WHERE id = $1 RETURNING id', [req.params.id]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Coupon not found' });
+    res.json({ message: 'Coupon deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting coupon:', error);
+    res.status(500).json({ error: 'Failed to delete coupon' });
+  }
+});
+
 // ==================== CONFIG ====================
 
 app.get('/api/config/:key', async (req, res) => {
   try {
     const { key } = req.params;
-    const result = await pool.query('SELECT * FROM config WHERE key = $1', [key]);
+    let result = await pool.query('SELECT * FROM config WHERE key = $1', [key]);
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Config not found' });
+      // Create default config if not exists
+      result = await pool.query(
+        'INSERT INTO config (key, value, description) VALUES ($1, $2, $3) RETURNING *',
+        [key, '{}', 'Auto-created config']
+      );
     }
     res.json(result.rows[0]);
   } catch (error) {
@@ -671,13 +796,17 @@ app.put('/api/config/:key', authMiddleware, adminOnly, async (req, res) => {
     const { key } = req.params;
     const { value } = req.body;
 
-    const result = await pool.query(
+    let result = await pool.query(
       'UPDATE config SET value = $1, updated_at = CURRENT_TIMESTAMP WHERE key = $2 RETURNING *',
       [JSON.stringify(value), key]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Config not found' });
+      // Create if not exists
+      result = await pool.query(
+        'INSERT INTO config (key, value, description) VALUES ($1, $2, $3) RETURNING *',
+        [key, JSON.stringify(value), 'Auto-created config']
+      );
     }
 
     res.json(result.rows[0]);
@@ -727,19 +856,42 @@ app.put('/api/users/:id', authMiddleware, async (req, res) => {
 app.put('/api/users/:id/password', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { password } = req.body;
+    const { password, currentPassword } = req.body;
     if (!password || password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    if (req.user.role !== 'admin' && req.user.id !== id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    if (req.user.role !== 'admin') {
+      const user = await pool.query('SELECT password_hash FROM users WHERE id = $1', [id]);
+      if (!user.rows.length || !currentPassword || !await bcrypt.compare(currentPassword, user.rows[0].password_hash)) {
+        return res.status(401).json({ error: 'Current password is incorrect' });
+      }
     }
     const password_hash = await bcrypt.hash(password, 10);
     const result = await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2 RETURNING id, email, name, role', [password_hash, id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
-    res.json({ ...result.rows[0], plainPassword: password });
+    res.json(result.rows[0]);
   } catch (error) {
     console.error('Error updating password:', error);
     res.status(500).json({ error: 'Failed to update password' });
+  }
+});
+
+app.delete('/api/users/:id', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
   }
 });
 
@@ -819,8 +971,8 @@ app.put('/api/orders/:id/assign-agent', authMiddleware, adminOnly, async (req, r
     }
     
     const result = await pool.query(
-      'UPDATE orders SET delivery_agent = $1 WHERE id = $2 RETURNING *',
-      [agentInfo ? JSON.stringify(agentInfo) : null, id]
+      'UPDATE orders SET delivery_agent_id = $1 WHERE id = $2 RETURNING *',
+      [delivery_agent_id || null, id]
     );
     
     if (result.rows.length === 0) {
@@ -935,7 +1087,7 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal server error', message: err.message });
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 // Start server

@@ -1,6 +1,6 @@
-const CACHE_NAME = 'jefram-stores-v1';
-const STATIC_CACHE = 'jefram-static-v1';
-const DYNAMIC_CACHE = 'jefram-dynamic-v1';
+const CACHE_NAME = 'jefram-stores-v2';
+const STATIC_CACHE = 'jefram-static-v2';
+const DYNAMIC_CACHE = 'jefram-dynamic-v2';
 
 const STATIC_ASSETS = [
     './',
@@ -46,6 +46,14 @@ self.addEventListener('activate', function(event) {
 });
 
 self.addEventListener('fetch', function(event) {
+    // Skip API requests - let them go directly to network
+    if (event.request.url.includes('/api/')) {
+        return;
+    }
+    if (event.request.mode === 'navigate') {
+        event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+        return;
+    }
     event.respondWith(
         caches.match(event.request)
             .then(response => {

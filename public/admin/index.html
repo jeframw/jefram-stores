@@ -686,6 +686,46 @@ label { color: var(--text); }
   .size-input-row { flex-direction: column; }
   .size-input-row input { width: 100%; }
 }
+.product-manager-mode .nav-item:not([data-section="products"]):not([data-section="add-product"]) {
+    display: none;
+}
+.product-manager-mode .logo p::after {
+    content: 'Product Management';
+    font-size: 0.72rem;
+}
+.product-manager-mode .logo p {
+    font-size: 0;
+}
+.product-manager-mode .product-form {
+    max-width: 760px;
+}
+.product-manager-mode .table-container {
+    overflow-x: auto;
+}
+@media (max-width: 768px) {
+    .product-manager-mode .main-content {
+        margin-left: 72px;
+        padding: 12px;
+    }
+    .product-manager-mode .header {
+        padding: 14px;
+    }
+    .product-manager-mode .header h1 {
+        font-size: 1.15rem;
+    }
+    .product-manager-mode .section {
+        padding: 14px;
+    }
+    .product-manager-mode .section-title {
+        font-size: 1.05rem;
+    }
+    .product-manager-mode .product-form {
+        max-width: none;
+    }
+    .product-manager-mode table {
+        min-width: 640px;
+    }
+}
 </style>
 </head>
 <body>
@@ -730,6 +770,9 @@ label { color: var(--text); }
 </div>
 <div class="nav-item" data-section="admins" id="navAdmins" style="display: none;">
 <i class="fas fa-user-shield"></i> <span>Admins</span>
+</div>
+<div class="nav-item" data-section="product-managers" id="navProductManagers" style="display: none;">
+<i class="fas fa-box-open"></i> <span>Product Managers</span>
 </div>
 </div>
 <div class="main-content">
@@ -917,9 +960,9 @@ label { color: var(--text); }
 </div>
 </div>
 <div class="upload-area" onclick="document.getElementById('productImages').click()">
-<i class="fas fa-cloud-upload-alt"></i> Click to upload product photos (up to 5)
+<i class="fas fa-cloud-upload-alt"></i> Click to upload product photos (up to 6)
 </div>
-<div style="margin-top:8px; font-size:0.9rem; color:#666;">You can select up to 5 photos. The first selected image becomes the thumbnail.</div>
+<div style="margin-top:8px; font-size:0.9rem; color:#666;">You can select up to 6 photos. The first selected image becomes the thumbnail.</div>
 <div class="image-preview" id="productImagePreview"></div>
 <input type="file" id="productImages" style="display:none" accept="image/*" multiple onchange="previewProductImage(this)">
 <textarea id="productDesc" placeholder="Description"></textarea>
@@ -1273,6 +1316,19 @@ label { color: var(--text); }
 </div>
 </div>
 </div>
+<!-- PRODUCT MANAGERS SECTION -->
+<div id="product-managers" class="section">
+<div class="section-title">
+<span>Product Manager Management</span>
+<button class="btn-primary" onclick="showAddProductManagerModal()">Add Product Manager</button>
+</div>
+<div class="table-container">
+<table>
+<thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Created</th><th>Action</th></tr></thead>
+<tbody id="productManagersList"></tbody>
+</table>
+</div>
+</div>
 <!-- EDIT PRODUCT MODAL -->
 <div id="editProductModal" class="modal">
 <div class="modal-content">
@@ -1305,9 +1361,9 @@ label { color: var(--text); }
 </div>
 <textarea id="editProductDesc" placeholder="Description" style="width:100%; margin-bottom:10px; padding:10px;"></textarea>
 <div class="upload-area" onclick="document.getElementById('editProductImages').click()">
-<i class="fas fa-cloud-upload-alt"></i> Click to upload product photos (up to 5)
+<i class="fas fa-cloud-upload-alt"></i> Click to upload product photos (up to 6)
 </div>
-<div style="margin-top:8px; font-size:0.9rem; color:#666;">You can select up to 5 photos. The first selected image becomes the thumbnail.</div>
+<div style="margin-top:8px; font-size:0.9rem; color:#666;">You can select up to 6 photos. The first selected image becomes the thumbnail.</div>
 <div class="image-preview" id="editProductImagePreview"></div>
 <input type="file" id="editProductImages" style="display:none" accept="image/*" multiple onchange="previewEditProductImage(this)">
 <button class="btn-primary" onclick="saveEditProduct()" style="width:100%;">Save Changes</button>
@@ -1323,23 +1379,32 @@ label { color: var(--text); }
 <input type="email" id="adminEmail" placeholder="Admin Email" style="width:100%; margin-bottom:10px; padding:10px;">
 <input type="password" id="adminPassword" placeholder="Password" style="width:100%; margin-bottom:10px; padding:10px;">
 <select id="newAdminRole" style="width:100%; margin-bottom:10px; padding:10px;">
-<option value="subadmin" selected>Sub Admin</option>
-<option value="master">Master Admin</option>
+<option value="admin" selected>Admin</option>
 </select>
 <button class="btn-primary" onclick="addNewAdmin()">Create</button>
 <button onclick="closeAddAdminModal()">Cancel</button>
 </div>
 </div>
+<div id="addProductManagerModal" class="modal">
+<div class="modal-content">
+<h3>Add Product Manager</h3>
+<input type="text" id="pmName" placeholder="Name" style="width:100%; margin-bottom:10px; padding:10px;">
+<input type="email" id="pmEmail" placeholder="Email" style="width:100%; margin-bottom:10px; padding:10px;">
+<input type="password" id="pmPassword" placeholder="Password" style="width:100%; margin-bottom:10px; padding:10px;">
+<p style="font-size:12px; color:#666; margin-bottom:10px;">Product managers can only add/edit/delete products and categories</p>
+<button class="btn-primary" onclick="addProductManager()">Create</button>
+<button onclick="closeAddProductManagerModal()">Cancel</button>
+</div>
+</div>
 <div id="recoverAdminModal" class="modal">
 <div class="modal-content">
 <h3>🔧 Recover Admin</h3>
-<p style="font-size:12px; color:#666; margin-bottom:10px;">Use this when an email is already in Firebase Auth but has no admin record. Find the UID in Firebase Console → Authentication → Users.</p>
-<input type="text" id="recoverAdminUid" placeholder="Firebase Auth User UID" style="width:100%; margin-bottom:10px; padding:10px;">
+<p style="font-size:12px; color:#666; margin-bottom:10px;">Use this when an email is already registered but has no admin record. Enter the user ID from the database.</p>
+<input type="text" id="recoverAdminUid" placeholder="User ID (UUID)" style="width:100%; margin-bottom:10px; padding:10px;">
 <input type="text" id="recoverAdminUsername" placeholder="Display Name" style="width:100%; margin-bottom:10px; padding:10px;">
 <input type="email" id="recoverAdminEmail" placeholder="Admin Email" style="width:100%; margin-bottom:10px; padding:10px;">
 <select id="recoverAdminRole" style="width:100%; margin-bottom:10px; padding:10px;">
-<option value="subadmin" selected>Sub Admin</option>
-<option value="master">Master Admin</option>
+<option value="admin" selected>Admin</option>
 </select>
 <button class="btn-primary" onclick="recoverAdmin()">Recover</button>
 <button onclick="closeRecoverAdminModal()">Cancel</button>
@@ -1475,7 +1540,7 @@ let promoProducts = [];
 // Advert variables
 let advert1ImageBase64 = null;
 let advert2ImageBase64 = null;
-// Cookie helpers (kept for any legacy use; admin auth is now Firebase Auth)
+// Cookie helpers (kept for any legacy use; admin auth is now JWT-based)
 function setCookie(name, value, days) {
 const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
 document.cookie = `${name}=${value}; expires=${expires}; path=/`;
@@ -1492,14 +1557,20 @@ document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
 let currentAdmin = null;
 let isMaster = false;
 let isSubAdmin = false;
-// ===== FIREBASE AUTH: ADMIN SESSION =====
+// ===== JWT AUTH: ADMIN SESSION =====
 function initDashboard() {
-  if (isMaster) { loadStats(); loadOrders(); loadUsers(); loadSalesSummary(); loadAdmins(); }
-  loadDeliveryAgents();
   loadProducts();
-  loadCoupons();
-  loadReviews();
-  loadSettings();
+    if (isMaster) {
+        loadStats();
+        loadOrders();
+        loadUsers();
+        loadSalesSummary();
+        loadAdmins();
+        loadDeliveryAgents();
+        loadCoupons();
+        loadReviews();
+        loadSettings();
+    }
   toggleSizeSection();
 }
 window.checkAdminAuth = async function() {
@@ -1518,8 +1589,8 @@ window.checkAdminAuth = async function() {
     const user = await JeframAPI.getCurrentUser();
     console.log('Current user:', user);
     
-    if (!user || user.role !== 'admin') {
-      console.log('Redirecting to login - not admin or user missing');
+        if (!user || !['admin', 'product_manager'].includes(user.role)) {
+            console.log('Redirecting to login - unsupported role or user missing');
       localStorage.removeItem('jefram_token');
       localStorage.removeItem('jefram_user');
       window.location.href = 'login.html';
@@ -1533,19 +1604,22 @@ window.checkAdminAuth = async function() {
       email: user.email
     };
     isMaster = currentAdmin.role === 'admin';
-    isSubAdmin = currentAdmin.role === 'subadmin';
+    isSubAdmin = currentAdmin.role === 'product_manager';
+    document.body.classList.toggle('product-manager-mode', isSubAdmin);
     const permissionBadge = document.getElementById('permissionBadge');
-    const navAdmins = document.getElementById('navAdmins');
-    const adminRole = document.getElementById('adminRole');
-    if (isSubAdmin) {
-      if (permissionBadge) permissionBadge.innerHTML = '🔒 Products Only';
-      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-      const products = document.getElementById('products');
-      if (products) products.classList.add('active');
-    } else {
-      if (permissionBadge) permissionBadge.innerHTML = '👑 Full Access';
-      if (navAdmins) navAdmins.style.display = 'flex';
-    }
+const navAdmins = document.getElementById('navAdmins');
+const navProductManagers = document.getElementById('navProductManagers');
+const adminRole = document.getElementById('adminRole');
+if (isSubAdmin) {
+  if (permissionBadge) permissionBadge.innerHTML = '🔒 Products Only';
+  document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+  const products = document.getElementById('products');
+  if (products) products.classList.add('active');
+} else {
+  if (permissionBadge) permissionBadge.innerHTML = '👑 Full Access';
+  if (navAdmins) navAdmins.style.display = 'flex';
+  if (navProductManagers) navProductManagers.style.display = 'flex';
+}
     if (adminRole) adminRole.innerHTML = `<i class="fas fa-shield-alt"></i> ${currentAdmin.role} Admin`;
     initDashboard();
   } catch (error) {
@@ -1590,6 +1664,7 @@ if (section === 'reviews') loadReviews();
 if (section === 'overview') loadStats();
 if (section === 'sales') loadSalesSummary();
 if (section === 'admins') loadAdmins();
+if (section === 'product-managers') loadProductManagers();
 if (section === 'settings') loadSettings();
 });
 });
@@ -1836,9 +1911,9 @@ window.previewProductImage = function(input) {
     previewContainer.style.flexWrap = 'wrap';
     previewContainer.style.gap = '10px';
     previewContainer.style.padding = '10px';
-    const maxFiles = Math.min(input.files.length, 5);
-    if (input.files.length > 5) {
-        document.getElementById('productMessage').innerHTML = '<span style="color:orange;">⚠️ Maximum 5 images allowed. Only first 5 will be processed.</span>';
+    const maxFiles = Math.min(input.files.length, 6);
+    if (input.files.length > 6) {
+        document.getElementById('productMessage').innerHTML = '<span style="color:orange;">⚠️ Maximum 6 images allowed. Only first 6 will be processed.</span>';
         setTimeout(() => { document.getElementById('productMessage').innerHTML = ''; }, 3000);
     }
     let processedCount = 0;
@@ -1915,7 +1990,7 @@ window.removeProductImage = function(index) {
         const countDiv = document.createElement('div');
         countDiv.className = 'image-count';
         countDiv.style.cssText = 'padding:6px; color:#666; align-self:center; font-size:11px; width:100%; text-align:center;';
-        countDiv.textContent = `(${currentImageBase64List.length} of 5)`;
+        countDiv.textContent = `(${currentImageBase64List.length} of 6)`;
         previewContainer.appendChild(countDiv);
     }
 };
@@ -1932,9 +2007,9 @@ window.previewEditProductImage = function(input) {
     previewContainer.style.flexWrap = 'wrap';
     previewContainer.style.gap = '10px';
     previewContainer.style.padding = '10px';
-    const maxFiles = Math.min(input.files.length, 5);
-    if (input.files.length > 5) {
-        showToast('Maximum 5 images allowed. Only first 5 will be uploaded.', 'warning');
+    const maxFiles = Math.min(input.files.length, 6);
+    if (input.files.length > 6) {
+        showToast('Maximum 6 images allowed. Only first 6 will be uploaded.', 'warning');
     }
     let processedCount = 0;
     const loadingMsg = document.createElement('div');
@@ -2008,7 +2083,7 @@ window.removeEditProductImage = function(index) {
         const countDiv = document.createElement('div');
         countDiv.className = 'image-count';
         countDiv.style.cssText = 'padding:6px; color:#666; align-self:center; font-size:11px; width:100%; text-align:center;';
-        countDiv.textContent = `(${editImageBase64List.length} of 5)`;
+        countDiv.textContent = `(${editImageBase64List.length} of 6)`;
         previewContainer.appendChild(countDiv);
     }
 };
@@ -2125,7 +2200,7 @@ showToast('Name, Price, and Category are required', 'error');
 return;
 }
 // If no new images were uploaded, keep existing ones
-let imageUrls = editImageBase64List.length > 0 ? editImageBase64List.slice(0, 5) : null;
+let imageUrls = editImageBase64List.length > 0 ? editImageBase64List.slice(0, 6) : null;
 try {
 const updateData = {
 name,
@@ -2139,7 +2214,7 @@ hasSizes: hasSizes
 };
 // Only update images if new ones were uploaded
 if (imageUrls && imageUrls.length > 0) {
-updateData.image_urls = imageUrls.slice(0, 5);
+updateData.image_urls = imageUrls.slice(0, 6);
 updateData.image_url = imageUrls[0];
 }
 if (hasSizes) {
@@ -2218,7 +2293,7 @@ subcategory: subcategory || '',
 brand: brand || '',
 discount_percent: Math.max(0, Math.min(100, discountPercent)),
 image_url: currentImageBase64List[0],
-image_urls: currentImageBase64List.slice(0, 5),
+image_urls: currentImageBase64List.slice(0, 6),
 description: description || '',
 hasSizes: hasSizes,
 createdAt: new Date().toISOString()
@@ -3021,8 +3096,7 @@ const reviews = await JeframAPI.getReviews();
 const configDoc = await JeframAPI.getConfig('store');
 let totalRevenue = 0;
 let deliveredOrders = 0;
-ordersSnap.forEach(doc => {
-const order = doc.data();
+orders.forEach(order => {
 // ===== FIXED: Only count DELIVERED orders =====
 if (order.status === 'delivered') {
 deliveredOrders++;
@@ -3030,8 +3104,7 @@ totalRevenue += (order.total || order.subtotal || 0) + (order.delivery_fee || 0)
 }
 });
 let lowStockCount = 0;
-productsSnap.forEach(doc => {
-const p = doc.data();
+products.forEach(p => {
 if (p.hasSizes && p.sizes) {
 const totalStock = p.sizes.reduce((sum, s) => sum + s.stock, 0);
 if (totalStock <= 5 && totalStock > 0) lowStockCount++;
@@ -3339,11 +3412,7 @@ window.addDeliveryAgent = async function() {
         return;
     }
     try {
-        // delivery agent creation not available via API yet; await (async () => {
-            name: name,
-            phone: phone,
-            createdAt: new Date().toISOString()
-        });
+        await JeframAPI.createDeliveryAgent({ name, phone });
         showToast('Delivery agent added!', 'success');
         closeAddAgentModal();
         loadDeliveryAgents();
@@ -3355,7 +3424,7 @@ window.addDeliveryAgent = async function() {
 window.deleteDeliveryAgent = async function(agentId) {
     if (!confirm('Delete this delivery agent?')) return;
     try {
-        })(); // delete agent not available
+        await JeframAPI.deleteDeliveryAgent(agentId);
         showToast('Agent deleted', 'success');
         loadDeliveryAgents();
     } catch (error) {
@@ -3367,7 +3436,7 @@ window.assignDeliveryAgent = async function(orderId, agentId) {
     if (!agentId) {
         // Remove agent assignment
         try {
-            await JeframAPI.updateOrderStatus(orderId, order.status); // delivery_agent cleared
+            await JeframAPI.assignDeliveryAgent(orderId, null);
             showToast('Agent unassigned', 'success');
         } catch (error) {
             console.error('Error unassigning agent:', error);
@@ -3376,14 +3445,7 @@ window.assignDeliveryAgent = async function(orderId, agentId) {
         return;
     }
     try {
-        const agent = deliveryAgents.find(a => a.id === agentId);
-        await JeframAPI.updateOrderStatus(orderId, 
-            delivery_agent: {
-                id: agent.id,
-                name: agent.name,
-                phone: agent.phone
-            }
-        });
+        await JeframAPI.assignDeliveryAgent(orderId, agentId);
         showToast('Agent assigned!', 'success');
     } catch (error) {
         console.error('Error assigning agent:', error);
@@ -3474,8 +3536,8 @@ window.loadAdmins = async function() {
         const adminsList = document.getElementById('adminsList');
         if (adminsList) {
             adminsList.innerHTML = '';
-            // admins forEach removed
-                // admin data removed
+            const admins = (await JeframAPI.getUsers()).filter(user => user.role === 'admin');
+            admins.forEach(admin => {
                 adminsList.innerHTML += `
                     <tr>
                         <td>${admin.username || 'N/A'}</td>
@@ -3491,6 +3553,72 @@ window.loadAdmins = async function() {
         console.error('Error loading admins:', error);
     }
 };
+// ===== LOAD PRODUCT MANAGERS FUNCTION =====
+window.loadProductManagers = async function() {
+    try {
+        const list = document.getElementById('productManagersList');
+        if (list) {
+            list.innerHTML = '';
+            const users = await JeframAPI.getUsers();
+            const managers = users.filter(user => user.role === 'product_manager');
+            managers.forEach(m => {
+                list.innerHTML += `
+                    <tr>
+                        <td>${m.name || 'N/A'}</td>
+                        <td>${m.email || 'N/A'}</td>
+                        <td>${m.role || 'product_manager'}</td>
+                        <td>${new Date(m.created_at || Date.now()).toLocaleDateString()}</td>
+                        <td>
+                            <button onclick="deleteProductManager('${m.id}')" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading product managers:', error);
+    }
+};
+
+window.showAddProductManagerModal = function() {
+    document.getElementById('addProductManagerModal').style.display = 'flex';
+};
+
+window.closeAddProductManagerModal = function() {
+    document.getElementById('addProductManagerModal').style.display = 'none';
+    document.getElementById('pmName').value = '';
+    document.getElementById('pmEmail').value = '';
+    document.getElementById('pmPassword').value = '';
+};
+
+window.addProductManager = async function() {
+    const name = document.getElementById('pmName').value.trim();
+    const email = document.getElementById('pmEmail').value.trim();
+    const password = document.getElementById('pmPassword').value;
+    if (!name || !email || !password) {
+        alert('Please fill all fields');
+        return;
+    }
+    try {
+        await JeframAPI.createProductManager({ name, email, password });
+        closeAddProductManagerModal();
+        loadProductManagers();
+        alert('Product Manager created successfully');
+    } catch (error) {
+        alert(error.message || 'Failed to create product manager');
+    }
+};
+
+window.deleteProductManager = async function(id) {
+    if (!confirm('Delete this product manager?')) return;
+    try {
+        await JeframAPI.deleteUser(id);
+        loadProductManagers();
+    } catch (error) {
+        alert(error.message || 'Failed to delete product manager');
+    }
+};
+
 // ===== LOAD COUPONS FUNCTION =====
 window.loadCoupons = async function() {
     try {
@@ -3652,21 +3780,14 @@ window.addNewAdmin = async function() {
         return;
     }
     try {
-        // admin creation handled by backend API
-        showToast('Admin creation is handled by the backend API', 'error'); return;
-        // admin creation via Firebase Auth removed
-            username: username,
-            email: email,
-            role: role,
-            createdAt: new Date().toISOString()
-        });
+        await JeframAPI.createAdmin({ username, email, password, role });
         showToast('Admin created successfully!', 'success');
         closeAddAdminModal();
         loadAdmins();
     } catch (error) {
         console.error('Error creating admin:', error);
         if (error.message) {
-            showToast('This email already exists in Firebase Auth but has no admin record. Go to Firebase Console → Authentication → Users, find this email, copy the UID, and use "Recover Admin" below.', 'error');
+            showToast('This email already exists in the database but has no admin record. Use "Recover Admin" below.', 'error');
         } else {
             showToast('Failed to create admin: ' + error.message, 'error');
         }
@@ -3694,12 +3815,7 @@ window.recoverAdmin = async function() {
         return;
     }
     try {
-        // admin creation via Firebase Auth removed
-            username: username,
-            email: email,
-            role: role,
-            createdAt: new Date().toISOString()
-        });
+        await JeframAPI.recoverAdmin({ uid, username, email, role });
         showToast('Admin recovered successfully!', 'success');
         closeRecoverAdminModal();
         loadAdmins();
@@ -3737,11 +3853,11 @@ window.confirmOrderWithDetails = async function() {
     try {
         const order = await JeframAPI.getOrder(orderId);
         // order already fetched
-        await JeframAPI.updateOrderStatus(orderId,
+        await JeframAPI.confirmOrder(orderId, {
             status: 'confirmed',
             delivery_fee: deliveryFee,
-            estimated_delivery_date: deliveryDate || '',
-            tracking_number: trackingNumber || (order && order.tracking_number) || ''
+            estimated_delivery_date: deliveryDate || null,
+            tracking_number: trackingNumber || (order && order.tracking_number) || null
         });
         showToast('Order confirmed!', 'success');
         closeOrderConfirmModal();
@@ -3827,13 +3943,12 @@ window.exportOrders = async function() {
     try {
         const orders = await JeframAPI.getOrders();
         const data = [];
-        ordersSnap.forEach(d => {
-            const o = d.data();
+        orders.forEach(o => {
             data.push({
-                'Order ID': d.id.slice(-6),
+                'Order ID': o.id?.slice(-6) || '',
                 'Customer': o.customer?.name || '',
                 'Phone': o.customer?.phone || '',
-                'Items': (o.items || []).map(i => i.name + (i.selectedSize ? ' (' + i.selectedSize + ')' : '')).join(', '),
+                'Items': (o.items || []).map(i => i.product_name + (i.size ? ' (' + i.size + ')' : '')).join(', '),
                 'Subtotal': o.subtotal || 0,
                 'Discount': o.discount || 0,
                 'Delivery Fee': o.delivery_fee || 0,
@@ -3841,7 +3956,7 @@ window.exportOrders = async function() {
                 'Status': o.status || '',
                 'Payment': o.payment_method || '',
                 'Tracking': o.tracking_number || '',
-                'Created': o.createdAt ? new Date(o.createdAt).toLocaleString() : ''
+                'Created': o.created_at ? new Date(o.created_at).toLocaleString() : ''
             });
         });
         downloadXlsx(data, 'orders_export.xlsx');
@@ -3904,8 +4019,6 @@ window.exportProducts = async function() {
 window.exportSalesReport = async function() {
     try {
         const orders = await JeframAPI.getOrders();
-        // orders already fetched
-        ordersSnap.forEach(d => orders.push({ id: d.id, ...d.data() }));
         const totalSales = orders.reduce((s, o) => s + ((o.subtotal || 0) - (o.discount || 0) + (o.delivery_fee || 0)), 0);
         const delivered = orders.filter(o => o.status === 'delivered').length;
         const pending = orders.filter(o => o.status === 'pending' || o.status === 'pending_payment').length;
