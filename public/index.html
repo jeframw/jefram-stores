@@ -2177,6 +2177,8 @@
         window.logout = async function() {
             currentUser = null;
             currentUserDocId = null;
+            localStorage.removeItem('jefram_token');
+            localStorage.removeItem('jefram_user');
             cart = [];
             wishlist = [];
             recentlyViewed = [];
@@ -2434,7 +2436,6 @@
         window.trackingSelectedId = null;
 
         window.loadTracking = async function() {
-            if (!db) { console.error('Database not initialized'); return; }
             const trackingInfo = document.getElementById('trackingInfo');
             trackingInfo.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
             try {
@@ -3305,6 +3306,10 @@
         });
 
         (async function init() {
+            const token = localStorage.getItem('jefram_token');
+            if (token) {
+                await window.handleAuthState(true);
+            }
             await window.loadConfig();
             await window.fetchProducts();
             window.loadWishlistFromLocalStorage();
