@@ -38,7 +38,7 @@ async function migrate() {
         phone VARCHAR(20) UNIQUE,
         name VARCHAR(255),
         address TEXT,
-        role VARCHAR(20) DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'delivery_agent')),
+        role VARCHAR(20) DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'delivery_agent', 'product_manager')),
         password_hash TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
