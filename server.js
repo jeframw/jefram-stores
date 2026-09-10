@@ -1013,7 +1013,16 @@ app.put('/api/config/:key', authMiddleware, adminOnly, async (req, res) => {
 
 app.get('/api/users', authMiddleware, adminOnly, async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, email, name, phone, whatsapp, address, address AS location, role, created_at FROM users ORDER BY created_at DESC');
+    const result = await pool.query(`
+      SELECT u.id, u.email, u.name, u.phone, u.whatsapp, u.address, u.address AS location,
+             u.role, u.created_at, u.registration_promo_code,
+             COUNT(o.id)::int AS "ordersCount",
+             COALESCE(SUM(o.total), 0)::numeric AS "totalSpent"
+      FROM users u
+      LEFT JOIN orders o ON o.customer_id = u.id
+      GROUP BY u.id
+      ORDER BY u.created_at DESC
+    `);
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -1024,7 +1033,14 @@ app.get('/api/users', authMiddleware, adminOnly, async (req, res) => {
 app.get('/api/users/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, email, name, phone, whatsapp, address, address AS location, role, created_at FROM users WHERE id = $1',
+      `SELECT u.id, u.email, u.name, u.phone, u.whatsapp, u.address, u.address AS location,
+              u.role, u.created_at, u.registration_promo_code,
+              COUNT(o.id)::int AS "ordersCount",
+              COALESCE(SUM(o.total), 0)::numeric AS "totalSpent"
+       FROM users u
+       LEFT JOIN orders o ON o.customer_id = u.id
+       WHERE u.id = $1
+       GROUP BY u.id`,
       [req.params.id]
     );
     if (!result.rows.length) return res.status(404).json({ error: 'User not found' });

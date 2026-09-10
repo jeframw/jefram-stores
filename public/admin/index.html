@@ -4191,7 +4191,7 @@ async function hashPassword(password) {
                     return;
                 }
                 // u already fetched
-                const memberSince = u.registeredAt ? new Date(u.registeredAt).toLocaleDateString() : 'N/A';
+                const memberSince = u.created_at || u.registeredAt ? new Date(u.created_at || u.registeredAt).toLocaleDateString() : 'N/A';
                 details.innerHTML = `
                     <div style="margin-bottom:15px; padding:12px; background:#f8f9fa; border-radius:8px;">
                         <div style="margin-bottom:8px;"><strong>Name:</strong><br><input type="text" id="editUserName" value="${escapeHtml(u.name || '')}" style="width:100%; padding:8px; margin-top:4px; border:1px solid #ddd; border-radius:6px;"></div>
