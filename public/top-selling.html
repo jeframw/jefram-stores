@@ -120,7 +120,7 @@
             try {
                 products = await JeframAPI.getProducts();
                 const config = await JeframAPI.getConfig('store');
-                const topSelling = config.topSelling || [];
+                const topSelling = (config.value && config.value.topSelling) || [];
                 if (topSelling.length === 0) {
                     document.getElementById('productsGrid').innerHTML = '<div class="no-products">No top selling products available at the moment.</div>';
                     return;

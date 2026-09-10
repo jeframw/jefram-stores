@@ -2436,7 +2436,7 @@ if (topSellingSelect) {
 topSellingSelect.innerHTML = optionMarkup;
 }
 const configDoc = await JeframAPI.getConfig('store');
-const config = configDoc || {};
+const config = configDoc?.value || {};
 if (config && config.currentFlashEvent) {
 window.currentFlashEvent = config.currentFlashEvent;
 renderFlashSalesList(config.currentFlashEvent);
@@ -2691,7 +2691,7 @@ return;
 }
 try {
 const configDoc = await JeframAPI.getConfig('store');
-const currentTopSelling = configDoc && Array.isArray(configDoc.topSelling) ? configDoc.topSelling : [];
+const currentTopSelling = configDoc?.value && Array.isArray(configDoc.value.topSelling) ? configDoc.value.topSelling : [];
 const updatedTopSelling = currentTopSelling.filter(item => item.productId !== productId);
 updatedTopSelling.push({ productId, discountPercent: Math.max(0, Math.min(100, discountPercent)) });
 if (configDoc) {
@@ -2712,7 +2712,7 @@ showToast('Failed to save top selling entry', 'error');
 window.removeTopSelling = async function(productId) {
 try {
 const configDoc = await JeframAPI.getConfig('store');
-const currentTopSelling = configDoc && Array.isArray(configDoc.topSelling) ? configDoc.topSelling : [];
+const currentTopSelling = configDoc?.value && Array.isArray(configDoc.value.topSelling) ? configDoc.value.topSelling : [];
 const updatedTopSelling = currentTopSelling.filter(item => item.productId !== productId);
 if (configDoc) {
 await JeframAPI.updateConfig('store', { topSelling: updatedTopSelling });

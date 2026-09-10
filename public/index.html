@@ -2702,8 +2702,9 @@
             
             try {
                 const configDoc = await JeframAPI.getConfig("store");
-                if (configDoc.exists() && configDoc.data().topSelling && Array.isArray(configDoc.data().topSelling)) {
-                    const topSellingIds = configDoc.data().topSelling.map(ts => ts.productId);
+                const storeConfig = configDoc?.value || {};
+                if (Array.isArray(storeConfig.topSelling)) {
+                    const topSellingIds = storeConfig.topSelling.map(ts => ts.productId);
                     const topSellingProducts = products.filter(p => topSellingIds.includes(p.id));
                     
                     if (topSellingProducts.length === 0) {
