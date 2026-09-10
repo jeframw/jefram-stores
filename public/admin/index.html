@@ -747,6 +747,9 @@ label { color: var(--text); }
 <div class="nav-item" data-section="users">
 <i class="fas fa-users"></i> <span>Users</span>
 </div>
+<div class="nav-item" data-section="chat">
+<i class="fas fa-comments"></i> <span>Live Chat</span>
+</div>
 <div class="nav-item" data-section="products">
 <i class="fas fa-box"></i> <span>Products</span>
 </div>
@@ -915,6 +918,27 @@ label { color: var(--text); }
 <thead><tr><th>Name</th><th>Phone</th><th>WhatsApp</th><th>Location</th><th>Email</th><th>Orders</th><th>Total Spent</th><th>Action</th></tr></thead>
 <tbody id="usersList"></tbody>
 </table>
+</div>
+</div>
+<!-- PRODUCTS SECTION -->
+<!-- SUPPORT CHAT SECTION -->
+<div id="chat" class="section">
+<div class="section-title">
+<span>Live Chat</span>
+<button class="btn-primary btn-sm" onclick="loadChatConversations()"><i class="fas fa-sync"></i> Refresh</button>
+</div>
+<div style="display:grid; grid-template-columns:minmax(220px, 0.8fr) minmax(320px, 1.5fr); gap:16px; min-height:500px;">
+<div class="table-container" style="padding:0;">
+<div id="chatConversations" style="padding:10px;"><div style="padding:20px; color:#999;">Loading conversations...</div></div>
+</div>
+<div class="table-container" style="display:flex; flex-direction:column; padding:0;">
+<div id="chatConversationTitle" style="padding:14px; border-bottom:1px solid var(--border); font-weight:600;">Select a conversation</div>
+<div id="adminChatMessages" style="flex:1; overflow-y:auto; padding:15px; min-height:360px;"><div style="color:#999;">Customer messages will appear here.</div></div>
+<div style="display:flex; gap:8px; padding:12px; border-top:1px solid var(--border);">
+<input id="adminChatReply" type="text" placeholder="Type a reply..." style="flex:1; margin:0;" onkeypress="if(event.key === 'Enter') sendAdminChatReply()">
+<button class="btn-primary" onclick="sendAdminChatReply()"><i class="fas fa-paper-plane"></i></button>
+</div>
+</div>
 </div>
 </div>
 <!-- PRODUCTS SECTION -->
@@ -1570,6 +1594,7 @@ function initDashboard() {
         loadCoupons();
         loadReviews();
         loadSettings();
+        loadChatConversations();
     }
   toggleSizeSection();
 }
@@ -1666,8 +1691,77 @@ if (section === 'sales') loadSalesSummary();
 if (section === 'admins') loadAdmins();
 if (section === 'product-managers') loadProductManagers();
 if (section === 'settings') loadSettings();
+if (section === 'chat') loadChatConversations();
 });
 });
+let activeChatConversationId = null;
+let chatConversationPollTimer = null;
+
+function renderAdminChatMessages(messages) {
+const container = document.getElementById('adminChatMessages');
+if (!messages.length) {
+container.innerHTML = '<div style="color:#999;">No messages in this conversation.</div>';
+return;
+}
+container.innerHTML = messages.map((item) => `
+<div style="display:flex; flex-direction:column; align-items:${item.sender_type === 'admin' ? 'flex-end' : 'flex-start'}; margin-bottom:12px;">
+<div style="max-width:80%; padding:10px 13px; border-radius:12px; background:${item.sender_type === 'admin' ? 'var(--primary)' : '#f1f5f9'}; color:${item.sender_type === 'admin' ? '#fff' : 'var(--text)'}; white-space:pre-wrap;">${escapeHtml(item.message)}</div>
+<small style="color:#94a3b8; margin-top:3px;">${item.sender_type === 'admin' ? 'You' : 'Customer'} · ${new Date(item.created_at).toLocaleString()}</small>
+</div>`).join('');
+container.scrollTop = container.scrollHeight;
+}
+
+window.loadChatConversations = async function() {
+try {
+if (!chatConversationPollTimer) chatConversationPollTimer = setInterval(loadChatConversations, 5000);
+const conversations = await JeframAPI.getChatConversations();
+const container = document.getElementById('chatConversations');
+if (!conversations.length) {
+container.innerHTML = '<div style="padding:20px; color:#999;">No customer conversations yet.</div>';
+return;
+}
+container.innerHTML = conversations.map((conversation) => `
+<button type="button" onclick="selectChatConversation('${conversation.conversation_id}')" style="display:block; width:100%; text-align:left; padding:12px; border:0; border-bottom:1px solid var(--border); background:${conversation.conversation_id === activeChatConversationId ? '#eef2ff' : 'transparent'}; cursor:pointer;">
+<strong>${escapeHtml(conversation.customer_name || 'Guest customer')}</strong>
+${conversation.unread_count > 0 ? `<span style="float:right; background:#ef4444; color:#fff; border-radius:999px; padding:2px 7px; font-size:0.75rem;">${conversation.unread_count}</span>` : ''}
+<div style="font-size:0.82rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(conversation.last_message || '')}</div>
+<small style="color:#94a3b8;">${new Date(conversation.last_message_at).toLocaleString()}</small>
+</button>`).join('');
+if (activeChatConversationId) await selectChatConversation(activeChatConversationId, false);
+} catch (error) {
+console.error('Error loading chat conversations:', error);
+showToast('Failed to load live chat', 'error');
+}
+};
+
+window.selectChatConversation = async function(conversationId, refreshList = true) {
+activeChatConversationId = conversationId;
+try {
+const messages = await JeframAPI.getAdminChatMessages(conversationId);
+const firstCustomerMessage = messages.find((message) => message.sender_type === 'customer');
+document.getElementById('chatConversationTitle').textContent = firstCustomerMessage?.customer_name || 'Guest customer';
+renderAdminChatMessages(messages);
+if (refreshList) await loadChatConversations();
+} catch (error) {
+console.error('Error loading chat conversation:', error);
+showToast('Failed to load conversation', 'error');
+}
+};
+
+window.sendAdminChatReply = async function() {
+const input = document.getElementById('adminChatReply');
+const message = input.value.trim();
+if (!activeChatConversationId) return showToast('Select a conversation first', 'error');
+if (!message) return;
+try {
+await JeframAPI.replyToChat(activeChatConversationId, message);
+input.value = '';
+await selectChatConversation(activeChatConversationId);
+} catch (error) {
+console.error('Error sending chat reply:', error);
+showToast('Failed to send reply', 'error');
+}
+};
 // ===== ADVERT MANAGEMENT FUNCTIONS =====
 window.previewAdvertImage = async function(advertId, input) {
 const file = input.files[0];

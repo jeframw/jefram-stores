@@ -180,5 +180,14 @@ window.JeframAPI = {
   }),
 
   // Stats
-  getStats: () => api('/api/stats/overview')
+  getStats: () => api('/api/stats/overview'),
+  sendChatMessage: (data) => api('/api/chat/messages', {
+    method: 'POST', body: JSON.stringify(data)
+  }),
+  getChatMessages: (conversationId) => api(`/api/chat/messages/${encodeURIComponent(conversationId)}`),
+  getChatConversations: () => api('/api/admin/chat/conversations'),
+  getAdminChatMessages: (conversationId) => api(`/api/admin/chat/${encodeURIComponent(conversationId)}`),
+  replyToChat: (conversationId, message) => api(`/api/admin/chat/${encodeURIComponent(conversationId)}/reply`, {
+    method: 'POST', body: JSON.stringify({ message })
+  })
 };

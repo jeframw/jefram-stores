@@ -633,9 +633,7 @@
                 <button onclick="window.toggleChat()" style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer;">&times;</button>
             </div>
             <div id="chatMessages" class="chat-messages">
-                <div class="chat-message bot">
-                    <div class="message-content">Hello! How can I help you today?</div>
-                </div>
+                <div class="chat-message bot"><div class="message-content">Hello! How can we help you today?</div></div>
             </div>
             <div class="chat-input">
                 <input type="text" id="chatInput" placeholder="Type your message..." onkeypress="if(event.key === 'Enter') window.sendChatMessage()">
@@ -1340,46 +1338,75 @@
         };
 
         // ----- LIVE CHAT SUPPORT -----
+        const chatConversationKey = 'jefram-chat-conversation-id';
+        let chatPollTimer = null;
+
+        function getChatConversationId() {
+            let conversationId = localStorage.getItem(chatConversationKey);
+            if (!conversationId) {
+                conversationId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+                localStorage.setItem(chatConversationKey, conversationId);
+            }
+            return conversationId;
+        }
+
+        function renderChatMessages(messages) {
+            const chatMessages = document.getElementById('chatMessages');
+            if (!messages.length) {
+                chatMessages.innerHTML = '<div class="chat-message bot"><div class="message-content">Hello! How can we help you today?</div></div>';
+                return;
+            }
+            chatMessages.innerHTML = messages.map((item) => `
+                <div class="chat-message ${item.sender_type === 'admin' ? 'bot' : 'user'}">
+                    <div class="message-content">${window.escapeHtml(item.message).replace(/\n/g, '<br>')}</div>
+                </div>
+            `).join('');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function loadChatMessages() {
+            try {
+                const messages = await JeframAPI.getChatMessages(getChatConversationId());
+                renderChatMessages(messages);
+            } catch (error) {
+                console.error('Error loading support chat:', error);
+            }
+        }
+
+        window.sendChatMessage = async function() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+            const sendButton = document.querySelector('.chat-input button');
+            if (sendButton) sendButton.disabled = true;
+            input.value = '';
+            try {
+                await JeframAPI.sendChatMessage({
+                    conversationId: getChatConversationId(),
+                    message
+                });
+                await loadChatMessages();
+            } catch (error) {
+                input.value = message;
+                window.showToast('Unable to send message. Please try again.', 'error');
+            } finally {
+                if (sendButton) sendButton.disabled = false;
+            }
+        };
+
         window.toggleChat = function() {
             const chatWindow = document.getElementById('chatWindow');
             const chatBadge = document.getElementById('chatBadge');
-            
             if (chatWindow.style.display === 'none' || !chatWindow.style.display) {
                 chatWindow.style.display = 'flex';
                 chatBadge.style.display = 'none';
                 document.getElementById('chatInput').focus();
+                loadChatMessages();
+                if (!chatPollTimer) chatPollTimer = setInterval(loadChatMessages, 5000);
             } else {
                 chatWindow.style.display = 'none';
             }
-        };
-
-        window.sendChatMessage = function() {
-            const input = document.getElementById('chatInput');
-            const message = input.value.trim();
-            
-            if (!message) return;
-            
-            // Add user message
-            const chatMessages = document.getElementById('chatMessages');
-            chatMessages.innerHTML += `
-                <div class="chat-message user">
-                    <div class="message-content">${window.escapeHtml(message)}</div>
-                </div>
-            `;
-            
-            input.value = '';
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            // Simulate bot response
-            setTimeout(() => {
-                const botResponse = window.getBotResponse(message);
-                chatMessages.innerHTML += `
-                    <div class="chat-message bot">
-                        <div class="message-content">${botResponse}</div>
-                    </div>
-                `;
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 1000);
         };
 
         window.getBotResponse = function(message) {

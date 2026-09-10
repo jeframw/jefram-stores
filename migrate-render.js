@@ -182,6 +182,22 @@ async function migrate() {
     `);
     console.log('✓ Created/verified delivery_agents table');
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS support_messages (
+        id BIGSERIAL PRIMARY KEY,
+        conversation_id VARCHAR(100) NOT NULL,
+        sender_type VARCHAR(20) NOT NULL CHECK (sender_type IN ('customer', 'admin')),
+        message TEXT NOT NULL,
+        customer_name VARCHAR(255),
+        customer_email VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        read_at TIMESTAMP
+      );
+    `);
+    await client.query('CREATE INDEX IF NOT EXISTS idx_support_messages_conversation ON support_messages(conversation_id, created_at);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_support_messages_unread ON support_messages(sender_type, read_at);');
+    console.log('✓ Created/verified support_messages table');
+
     // Add columns if they don't exist (for backwards compatibility)
     try {
       await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;");

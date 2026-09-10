@@ -83,6 +83,98 @@ const productManagerOnly = async (req, res, next) => {
   next();
 };
 
+// ==================== SUPPORT CHAT ====================
+
+app.post('/api/chat/messages', async (req, res) => {
+  try {
+    const { conversationId, message, customerName, customerEmail } = req.body;
+    const trimmedMessage = String(message || '').trim();
+    const trimmedConversationId = String(conversationId || '').trim();
+    if (!trimmedConversationId || !trimmedMessage) {
+      return res.status(400).json({ error: 'Conversation ID and message are required' });
+    }
+    if (trimmedMessage.length > 2000) {
+      return res.status(400).json({ error: 'Message must be 2000 characters or fewer' });
+    }
+    const result = await pool.query(
+      `INSERT INTO support_messages (conversation_id, sender_type, message, customer_name, customer_email)
+       VALUES ($1, 'customer', $2, $3, $4) RETURNING *`,
+      [trimmedConversationId, trimmedMessage, customerName || null, customerEmail || null]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error saving support message:', error);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+app.get('/api/chat/messages/:conversationId', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, conversation_id, sender_type, message, customer_name, customer_email, created_at FROM support_messages WHERE conversation_id = $1 ORDER BY created_at ASC, id ASC',
+      [req.params.conversationId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error loading support messages:', error);
+    res.status(500).json({ error: 'Failed to load messages' });
+  }
+});
+
+app.get('/api/admin/chat/conversations', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT conversation_id,
+             MAX(created_at) AS last_message_at,
+             (array_agg(message ORDER BY created_at DESC, id DESC))[1] AS last_message,
+             (array_agg(customer_name ORDER BY created_at DESC, id DESC))[1] AS customer_name,
+             (array_agg(customer_email ORDER BY created_at DESC, id DESC))[1] AS customer_email,
+             COUNT(*) FILTER (WHERE sender_type = 'customer' AND read_at IS NULL)::int AS unread_count
+      FROM support_messages
+      GROUP BY conversation_id
+      ORDER BY last_message_at DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error loading support conversations:', error);
+    res.status(500).json({ error: 'Failed to load conversations' });
+  }
+});
+
+app.get('/api/admin/chat/:conversationId', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    await pool.query(
+      "UPDATE support_messages SET read_at = CURRENT_TIMESTAMP WHERE conversation_id = $1 AND sender_type = 'customer' AND read_at IS NULL",
+      [req.params.conversationId]
+    );
+    const result = await pool.query(
+      'SELECT id, conversation_id, sender_type, message, customer_name, customer_email, created_at FROM support_messages WHERE conversation_id = $1 ORDER BY created_at ASC, id ASC',
+      [req.params.conversationId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error loading support conversation:', error);
+    res.status(500).json({ error: 'Failed to load conversation' });
+  }
+});
+
+app.post('/api/admin/chat/:conversationId/reply', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const message = String(req.body.message || '').trim();
+    if (!message) return res.status(400).json({ error: 'Message is required' });
+    if (message.length > 2000) return res.status(400).json({ error: 'Message must be 2000 characters or fewer' });
+    const result = await pool.query(
+      `INSERT INTO support_messages (conversation_id, sender_type, message)
+       VALUES ($1, 'admin', $2) RETURNING *`,
+      [req.params.conversationId, message]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error replying to support conversation:', error);
+    res.status(500).json({ error: 'Failed to send reply' });
+  }
+});
+
 async function resolveCategoryId(categoryId, category) {
   if (categoryId !== undefined && categoryId !== null && categoryId !== '') {
     const parsedId = Number(categoryId);
