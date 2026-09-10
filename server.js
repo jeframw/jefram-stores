@@ -650,17 +650,25 @@ app.post('/api/categories', authMiddleware, productManagerOnly, async (req, res)
 
 // ==================== ORDERS ====================
 
-app.get('/api/orders', authMiddleware, adminOnly, async (req, res) => {
+app.get('/api/orders', authMiddleware, async (req, res) => {
   try {
+    const params = [];
+    let customerFilter = '';
+    if (req.user.role !== 'admin') {
+      customerFilter = ' WHERE o.customer_id = $1';
+      params.push(req.user.id);
+    }
     const result = await pool.query(
-      `SELECT o.*, 
+      `SELECT o.*,
               json_agg(json_build_object('id', oi.id, 'product_id', oi.product_id, 'product_name', oi.product_name, 'quantity', oi.quantity, 'price', oi.price, 'size', oi.size)) as items,
               json_build_object('name', u.name, 'phone', u.phone) as customer
        FROM orders o
        LEFT JOIN order_items oi ON o.id = oi.order_id
        LEFT JOIN users u ON o.customer_id = u.id
+       ${customerFilter}
        GROUP BY o.id, u.name, u.phone
-       ORDER BY o.created_at DESC`
+       ORDER BY o.created_at DESC`,
+      params
     );
     res.json(result.rows);
   } catch (error) {

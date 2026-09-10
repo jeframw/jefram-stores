@@ -2306,7 +2306,6 @@
 
         // ----- ORDERS WITH CANCELLATION, TRACKING, PROGRESS BAR -----
         window.loadOrders = async function() {
-            if (!db) { console.error('Database not initialized'); return; }
             const ordersList = document.getElementById('ordersList');
             ordersList.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
             try {
@@ -2314,7 +2313,7 @@
                 if (!orders.length) { ordersList.innerHTML = '<div style="text-align:center; padding:2rem;">No orders found</div>'; return; }
                 let html = '';
                 orders.forEach(o => {
-                    const itemsWithSizes = o.items.map(i => i.name + (i.selectedSize ? ' (' + i.selectedSize + ')' : '') + ' x' + i.quantity).join(', ');
+                    const itemsWithSizes = (o.items || []).map(i => (i.product_name || i.name || 'Product') + (i.size || i.selectedSize ? ' (' + (i.size || i.selectedSize) + ')' : '') + ' x' + i.quantity).join(', ');
                     
                     const canCancel = o.status === 'pending' || o.status === 'pending_payment';
                     const cancelButton = canCancel ? 
@@ -2382,7 +2381,7 @@
                     const isDelivered = (o.status || '').toLowerCase().trim() === 'delivered';
                     const hasRated = !!o.rated_at;
                     const ratingButton = isDelivered && !hasRated ? 
-                        '<button onclick="window.openRatingModal(\'' + doc.id + '\')" style="margin-top:10px; background:#667eea; color:white; padding:8px; border:none; border-radius:8px; width:100%;">⭐ Rate This Order</button>' : '';
+                        '<button onclick="window.openRatingModal(\'' + o.id + '\')" style="margin-top:10px; background:#667eea; color:white; padding:8px; border:none; border-radius:8px; width:100%;">⭐ Rate This Order</button>' : '';
                     
                     const ratingBadge = hasRated ? 
                         '<span class="rated-badge">⭐ Rated ' + (o.product_rating || o.delivery_rating || '') + '/5</span>' : '';
@@ -2396,7 +2395,7 @@
                         '</div>' +
                         '<div class="order-items">' + itemsWithSizes + '</div>' +
                         '<div class="order-total">Total: UGX ' + (o.total || o.subtotal).toLocaleString() + '</div>' +
-                        '<div style="font-size:12px; color:#999;">' + new Date(o.createdAt).toLocaleString() + '</div>' +
+                        '<div style="font-size:12px; color:#999;">' + new Date(o.created_at || o.createdAt).toLocaleString() + '</div>' +
                         '<div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">' +
                         '<button onclick="window.switchTab(\'tracking\')" style="background:#667eea; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px;">📦 Track Order</button>' +
                         cancelButton + ratingButton +
