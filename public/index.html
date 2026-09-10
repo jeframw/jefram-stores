@@ -844,6 +844,7 @@
                 <input type="email" id="customerEmail" placeholder="Email (required)" required>
                 <input type="text" id="customerWhatsapp" placeholder="WhatsApp Number (optional)">
                 <input type="text" id="customerLocation" placeholder="Location in Uganda" required>
+                <input type="text" id="customerPromoCode" placeholder="Promo Code (optional)">
                 <input type="password" id="customerPassword" placeholder="Password (min 8 chars, 1 uppercase, 1 number)" required>
                 <div id="passwordStrength" style="font-size: 12px; margin-top: 4px;"></div>
                 <button onclick="window.registerUser()" style="background: #667eea; color: white; padding: 12px; border: none; border-radius: 8px;">Register</button>
@@ -1679,13 +1680,17 @@
 
         // ----- COUPONS -----
         window.applyCoupon = async function() {
-            if (!db) { window.showToast('Database not connected', 'error'); return; }
             const code = document.getElementById('couponCode').value.trim().toUpperCase();
             if (!code) { window.showToast('Enter a coupon code', 'error'); return; }
             try {
                 const coupons = await JeframAPI.getCoupons({ code: code, active: "true" });
                 if (!coupons.length) { window.showToast('Invalid coupon', 'error'); return; }
                 appliedCoupon = coupons[0];
+                if (appliedCoupon.is_registration_promo) {
+                    appliedCoupon = null;
+                    window.showToast('This code is only valid during registration', 'error');
+                    return;
+                }
                 
                 // Handle both field name variations for backward compatibility
                 const expiryDate = appliedCoupon.expiry_date || appliedCoupon.expiryDate;
@@ -1741,7 +1746,6 @@
         };
 
         window.proceedToCheckout = async function() {
-            if (!db) { window.showToast('Database not connected', 'error'); return; }
             if (cart.length === 0) { window.showToast('Cart empty', 'error'); return; }
             if (!currentUser) { window.showToast('Please login to place order', 'error'); window.openLoginModal(); return; }
             
@@ -1811,9 +1815,6 @@
                 if (appliedCoupon) { orderData.coupon_code = appliedCoupon.code; }
                 
                 const order = await JeframAPI.createOrder(orderData);
-                if (appliedCoupon) {
-                    await JeframAPI.updateCouponUsage(appliedCoupon.id);
-                }
                 
                 const orderId = order.id;
                 const confirmationDetails = `
@@ -1995,7 +1996,6 @@
         };
 
         window.registerUser = async function() {
-            if (!db || !auth) { window.showToast('Database not connected', 'error'); return; }
             const name = window.sanitizeInput(document.getElementById('customerName').value);
             const phone = window.sanitizeInput(document.getElementById('customerPhone').value);
             const email = window.sanitizeInput(document.getElementById('customerEmail').value).toLowerCase();
@@ -2017,7 +2017,8 @@
                     email: email,
                     password: password,
                     phone: phone,
-                    address: location
+                    address: location,
+                    promoCode: window.sanitizeInput(document.getElementById('customerPromoCode').value).toUpperCase()
                 });
                 currentUserDocId = result.user.id;
                 currentUser = {
@@ -2036,7 +2037,7 @@
                 await window.mergeGuestCartIntoAPI();
                 await window.loadCartFromAPI();
                 document.getElementById('registerModal').style.display = 'none';
-                ['customerName', 'customerPhone', 'customerWhatsapp', 'customerEmail', 'customerLocation', 'customerPassword'].forEach(id => document.getElementById(id).value = '');
+                ['customerName', 'customerPhone', 'customerWhatsapp', 'customerEmail', 'customerLocation', 'customerPromoCode', 'customerPassword'].forEach(id => document.getElementById(id).value = '');
             } catch(e) {
                 console.error('Registration error:', e);
                 if (e.code === 'auth/email-already-in-use') {
@@ -2087,7 +2088,7 @@
         window.openRegisterModal = function() { document.getElementById('registerModal').style.display = 'flex'; };
         window.closeRegisterModal = function() { 
             document.getElementById('registerModal').style.display = 'none';
-            ['customerName', 'customerPhone', 'customerWhatsapp', 'customerEmail', 'customerLocation', 'customerPassword'].forEach(id => document.getElementById(id).value = '');
+            ['customerName', 'customerPhone', 'customerWhatsapp', 'customerEmail', 'customerLocation', 'customerPromoCode', 'customerPassword'].forEach(id => document.getElementById(id).value = '');
         };
 
         window.openPasswordResetModal = function() {

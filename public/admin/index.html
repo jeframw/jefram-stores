@@ -1435,7 +1435,7 @@ label { color: var(--text); }
 </div>
 </div>
 <div id="addAgentModal" class="modal"><div class="modal-content"><h3>Add Delivery Agent</h3><input type="text" id="agentName" placeholder="Agent Name" style="width:100%; margin-bottom:10px; padding:10px;"><input type="tel" id="agentPhone" placeholder="Phone Number" style="width:100%; margin-bottom:10px; padding:10px;"><button class="btn-primary" onclick="addDeliveryAgent()">Add</button><button onclick="closeAddAgentModal()">Cancel</button></div></div>
-<div id="addCouponModal" class="modal"><div class="modal-content"><h3>Create Coupon</h3><input type="text" id="couponCode" placeholder="Coupon Code" style="width:100%; margin-bottom:10px; padding:10px;"><select id="couponType" style="width:100%; margin-bottom:10px; padding:10px;"><option value="percentage">Percentage (%)</option><option value="fixed">Fixed Amount (UGX)</option></select><input type="number" id="couponValue" placeholder="Discount Value" style="width:100%; margin-bottom:10px; padding:10px;"><input type="number" id="couponUsageLimit" placeholder="Usage Limit (optional)" style="width:100%; margin-bottom:10px; padding:10px;"><input type="date" id="couponExpiry" style="width:100%; margin-bottom:10px; padding:10px;"><button class="btn-primary" onclick="createCoupon()">Create Coupon</button><button onclick="closeAddCouponModal()">Cancel</button></div></div>
+<div id="addCouponModal" class="modal"><div class="modal-content"><h3>Create Coupon</h3><input type="text" id="couponCode" placeholder="Coupon Code" style="width:100%; margin-bottom:10px; padding:10px;"><select id="couponType" style="width:100%; margin-bottom:10px; padding:10px;"><option value="percentage">Percentage (%)</option><option value="fixed">Fixed Amount (UGX)</option></select><input type="number" id="couponValue" placeholder="Discount Value" style="width:100%; margin-bottom:10px; padding:10px;"><input type="number" id="couponUsageLimit" placeholder="Usage Limit (optional)" style="width:100%; margin-bottom:10px; padding:10px;"><input type="date" id="couponExpiry" style="width:100%; margin-bottom:10px; padding:10px;"><label style="display:flex; align-items:center; gap:8px; margin-bottom:12px;"><input type="checkbox" id="couponRegistrationPromo"> Allow this code during customer registration</label><button class="btn-primary" onclick="createCoupon()">Create Coupon</button><button onclick="closeAddCouponModal()">Cancel</button></div></div>
 <div id="orderResponseModal" class="modal">
 <div class="modal-content">
 <h3>💬 Send Response to Customer</h3>
@@ -3231,21 +3231,19 @@ const type = document.getElementById('couponType').value;
 const value = parseFloat(document.getElementById('couponValue').value);
 const usageLimit = parseInt(document.getElementById('couponUsageLimit').value) || null;
 const expiryDate = document.getElementById('couponExpiry').value;
+const isRegistrationPromo = document.getElementById('couponRegistrationPromo').checked;
 if (!code || !value) return alert('Fill required fields');
 try {
     await JeframAPI.createCoupon({ 
         code, 
-        discount_percent: type === 'percentage' ? value : 0, // Match client-side field name
+        discount_percent: type === 'percentage' ? value : 0,
+        discount_fixed: type === 'fixed' ? value : null,
         discountType: type, 
         discountValue: value, 
         active: true, 
-        usageLimit, 
-        perUserLimit: 1, // Each customer can use coupon only ONCE
-        usedBy: [], // Track customer IDs who have used this coupon
-        expiryDate: expiryDate ? new Date(expiryDate).toISOString() : null, 
-        expiry_date: expiryDate ? new Date(expiryDate).toISOString() : null, // Match client-side field name
-        usedCount: 0, 
-        createdAt: new Date().toISOString() 
+        max_uses: usageLimit,
+        valid_until: expiryDate ? new Date(`${expiryDate}T23:59:59`).toISOString() : null,
+        is_registration_promo: isRegistrationPromo
     });
     closeAddCouponModal();
     loadCoupons();

@@ -160,6 +160,21 @@ async function migrate() {
       );
     `);
     console.log('✓ Created/verified coupons table');
+    await client.query('ALTER TABLE coupons ADD COLUMN IF NOT EXISTS is_registration_promo BOOLEAN DEFAULT FALSE;');
+    await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS registration_promo_code VARCHAR(100);');
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS coupon_redemptions (
+        id BIGSERIAL PRIMARY KEY,
+        coupon_id UUID NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        redemption_type VARCHAR(20) NOT NULL CHECK (redemption_type IN ('registration', 'order')),
+        order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (coupon_id, user_id, redemption_type)
+      );
+    `);
+    console.log('✓ Created/verified coupon_redemptions table');
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS config (

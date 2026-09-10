@@ -370,25 +370,56 @@ app.post('/api/auth/admin/recover', authMiddleware, adminOnly, async (req, res) 
 
 // Customer register
 app.post('/api/auth/customer/register', async (req, res) => {
+  const client = await pool.connect();
   try {
-    const { email, password, name, phone } = req.body;
+    const { email, password, name, phone, promoCode } = req.body;
     if (!email || !password || !name) {
       return res.status(400).json({ error: 'Name, email and password are required' });
     }
-    const existing = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
+    await client.query('BEGIN');
+    const existing = await client.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
     if (existing.rows.length > 0) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Email already registered' });
     }
+    let promo = null;
+    if (promoCode) {
+      const promoResult = await client.query(
+        `SELECT * FROM coupons
+         WHERE UPPER(code) = UPPER($1) AND active = true AND is_registration_promo = true
+           AND (valid_from IS NULL OR valid_from <= NOW())
+           AND (valid_until IS NULL OR valid_until >= NOW())
+           AND (max_uses IS NULL OR used_count < max_uses)
+         FOR UPDATE`,
+        [String(promoCode).trim()]
+      );
+      if (!promoResult.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Invalid or expired registration promo code' });
+      }
+      promo = promoResult.rows[0];
+    }
     const password_hash = await bcrypt.hash(password, 10);
-    const result = await pool.query(
-      'INSERT INTO users (email, password_hash, name, phone, role) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [email, password_hash, name, phone || null, 'customer']
+    const result = await client.query(
+      'INSERT INTO users (email, password_hash, name, phone, role, registration_promo_code) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [email, password_hash, name, phone || null, 'customer', promo ? promo.code : null]
     );
+    if (promo) {
+      await client.query(
+        `INSERT INTO coupon_redemptions (coupon_id, user_id, redemption_type) VALUES ($1, $2, 'registration')`,
+        [promo.id, result.rows[0].id]
+      );
+      await client.query('UPDATE coupons SET used_count = used_count + 1 WHERE id = $1', [promo.id]);
+    }
+    await client.query('COMMIT');
     const token = jwt.sign({ id: result.rows[0].id, email, role: 'customer' }, JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ token, user: result.rows[0] });
+    res.status(201).json({ token, user: result.rows[0], promoApplied: Boolean(promo) });
   } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
     console.error('Customer register error:', error);
     res.status(500).json({ error: 'Registration failed' });
+  } finally {
+    client.release();
   }
 });
 
@@ -674,12 +705,44 @@ app.post('/api/orders', authMiddleware, customerOnly, async (req, res) => {
       status, customer_name, customer_phone, customer_address, customer_city,
       coupon_code, items, payment_method, mobile_money_number, payment_screenshot, order_notes
     } = req.body;
+    let coupon = null;
+    let verifiedDiscount = Number(discount) || 0;
+    if (coupon_code) {
+      const couponResult = await client.query(
+        `SELECT * FROM coupons
+         WHERE UPPER(code) = UPPER($1) AND active = true
+           AND is_registration_promo = false
+           AND (valid_from IS NULL OR valid_from <= NOW())
+           AND (valid_until IS NULL OR valid_until >= NOW())
+           AND (max_uses IS NULL OR used_count < max_uses)
+         FOR UPDATE`,
+        [coupon_code]
+      );
+      if (!couponResult.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Coupon is invalid, expired, or fully used' });
+      }
+      coupon = couponResult.rows[0];
+      const redemption = await client.query(
+        "SELECT id FROM coupon_redemptions WHERE coupon_id = $1 AND user_id = $2 AND redemption_type = 'order'",
+        [coupon.id, req.user.id]
+      );
+      if (redemption.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: 'This account has already used this coupon' });
+      }
+      const couponValue = Number(coupon.discount_fixed || coupon.discount_percent || 0);
+      verifiedDiscount = coupon.discount_fixed
+        ? Math.min(couponValue, Number(subtotal) || 0)
+        : ((Number(subtotal) || 0) * couponValue) / 100;
+    }
+    const verifiedTotal = Math.max(0, (Number(subtotal) || 0) - verifiedDiscount + (Number(shipping) || 0));
 
     const orderResult = await client.query(
       `INSERT INTO orders (customer_id, total, subtotal, shipping, discount, status, customer_name, customer_phone, customer_address, customer_city, coupon_code, payment_method, mobile_money_number, payment_screenshot, order_notes)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        RETURNING *`,
-      [req.user.id, total, subtotal, shipping, discount, status || 'pending', customer_name, customer_phone, customer_address, customer_city, coupon_code, payment_method, mobile_money_number, payment_screenshot, order_notes]
+      [req.user.id, verifiedTotal, subtotal, shipping, verifiedDiscount, status || 'pending', customer_name, customer_phone, customer_address, customer_city, coupon ? coupon.code : null, payment_method, mobile_money_number, payment_screenshot, order_notes]
     );
 
     const orderId = orderResult.rows[0].id;
@@ -690,6 +753,14 @@ app.post('/api/orders', authMiddleware, customerOnly, async (req, res) => {
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [orderId, item.product_id, item.product_name, item.quantity, item.price, item.size]
       );
+    }
+
+    if (coupon) {
+      await client.query(
+        "INSERT INTO coupon_redemptions (coupon_id, user_id, redemption_type, order_id) VALUES ($1, $2, 'order', $3)",
+        [coupon.id, req.user.id, orderId]
+      );
+      await client.query('UPDATE coupons SET used_count = used_count + 1 WHERE id = $1', [coupon.id]);
     }
 
     await client.query('COMMIT');
@@ -831,13 +902,16 @@ app.get('/api/coupons', async (req, res) => {
 
 app.post('/api/coupons', authMiddleware, adminOnly, async (req, res) => {
   try {
-    const { code, discount_percent, discount_fixed, active, max_uses, valid_from, valid_until } = req.body;
+    const { code, discount_percent, discount_fixed, active, max_uses, valid_from, valid_until, is_registration_promo } = req.body;
+    if (!code || (!discount_percent && !discount_fixed)) {
+      return res.status(400).json({ error: 'Code and discount value are required' });
+    }
 
     const result = await pool.query(
-      `INSERT INTO coupons (code, discount_percent, discount_fixed, active, max_uses, valid_from, valid_until)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO coupons (code, discount_percent, discount_fixed, active, max_uses, valid_from, valid_until, is_registration_promo)
+       VALUES (UPPER($1), $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [code, discount_percent, discount_fixed, active, max_uses, valid_from, valid_until]
+      [code, discount_percent || 0, discount_fixed || null, active !== false, max_uses || null, valid_from || null, valid_until || null, Boolean(is_registration_promo)]
     );
 
     res.status(201).json(result.rows[0]);
