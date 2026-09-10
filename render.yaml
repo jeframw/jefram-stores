@@ -4,8 +4,7 @@ services:
     runtime: node
     region: frankfurt
     buildCommand: npm install
-    preDeployCommand: npm run migrate
-    startCommand: node server.js
+    startCommand: npm run migrate && node server.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
