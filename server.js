@@ -15,6 +15,11 @@ if (!JWT_SECRET || JWT_SECRET.length < 32) {
 }
 
 // Middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  next();
+});
 app.use(cors({
   origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : false,
   credentials: true
