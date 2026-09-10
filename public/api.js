@@ -165,6 +165,7 @@ window.JeframAPI = {
 
   // Users
   getUsers: () => api('/api/users'),
+  getUser: (id) => api(`/api/users/${encodeURIComponent(id)}`),
 
   deleteUser: (id) => api(`/api/users/${id}`, {
     method: 'DELETE'

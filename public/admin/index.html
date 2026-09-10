@@ -961,6 +961,7 @@ label { color: var(--text); }
 <input type="text" id="productName" placeholder="Product Name">
 <input type="number" id="productPrice" placeholder="Base Price (UGX)">
 <input type="text" id="productCategory" placeholder="Category (e.g., Clothing, Shoes, Electronics)">
+<select id="productType" style="width:100%; margin-bottom:10px; padding:10px;"><option value="other">Product type</option><option value="clothing">Clothing sizes</option><option value="shoes">Shoe sizes</option></select>
 <input type="text" id="productSubcategory" placeholder="Subcategory">
 <input type="text" id="productBrand" placeholder="Brand (e.g., Nike, Adidas, Samsung)" class="brand-input">
 <input type="number" id="productDiscountPercent" placeholder="Discount % (optional)" min="0" max="100">
@@ -971,6 +972,7 @@ label { color: var(--text); }
 </label>
 <div id="sizeManagement">
 <label>Add Sizes:</label>
+<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;"><button type="button" class="btn-primary btn-sm" onclick="addSizePreset('clothing')">Use XS-XXL</button><button type="button" class="btn-primary btn-sm" onclick="addSizePreset('shoes')">Use EU 36-46</button></div>
 <div class="size-input-row">
 <input type="text" id="sizeName" placeholder="Size (e.g., S, M, L, UK 7)" class="size-name">
 <input type="number" id="sizePrice" placeholder="Price (optional)" class="size-price">
@@ -1361,6 +1363,7 @@ label { color: var(--text); }
 <input type="text" id="editProductName" placeholder="Product Name" style="width:100%; margin-bottom:10px; padding:10px;">
 <input type="number" id="editProductPrice" placeholder="Price (UGX)" style="width:100%; margin-bottom:10px; padding:10px;">
 <input type="text" id="editProductCategory" placeholder="Category" style="width:100%; margin-bottom:10px; padding:10px;">
+<select id="editProductType" style="width:100%; margin-bottom:10px; padding:10px;"><option value="other">Product type</option><option value="clothing">Clothing sizes</option><option value="shoes">Shoe sizes</option></select>
 <input type="text" id="editProductSubcategory" placeholder="Subcategory" style="width:100%; margin-bottom:10px; padding:10px;">
 <input type="text" id="editProductBrand" placeholder="Brand" style="width:100%; margin-bottom:10px; padding:10px;">
 <input type="number" id="editProductDiscountPercent" placeholder="Discount % (optional)" min="0" max="100" style="width:100%; margin-bottom:10px; padding:10px;">
@@ -1371,6 +1374,7 @@ label { color: var(--text); }
 </label>
 <div id="editSizeManagement">
 <label>Add Sizes:</label>
+<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;"><button type="button" class="btn-primary btn-sm" onclick="addEditSizePreset('clothing')">Use XS-XXL</button><button type="button" class="btn-primary btn-sm" onclick="addEditSizePreset('shoes')">Use EU 36-46</button></div>
 <div class="size-input-row">
 <input type="text" id="editSizeName" placeholder="Size" class="size-name">
 <input type="number" id="editSizePrice" placeholder="Price (optional)" class="size-price">
@@ -1928,6 +1932,13 @@ document.getElementById('sizeName').value = '';
 document.getElementById('sizePrice').value = '';
 document.getElementById('sizeStock').value = '10';
 };
+window.addSizePreset = function(type) {
+const sizes = type === 'shoes' ? ['EU 36', 'EU 37', 'EU 38', 'EU 39', 'EU 40', 'EU 41', 'EU 42', 'EU 43', 'EU 44', 'EU 45', 'EU 46'] : ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+document.getElementById('productType').value = type;
+const stock = parseInt(document.getElementById('sizeStock').value) || 0;
+sizes.forEach(size => { if (!productSizes.find(item => item.size === size)) productSizes.push({ size, price: null, stock }); });
+renderSizeTags();
+};
 window.removeSize = function(index) {
 productSizes.splice(index, 1);
 renderSizeTags();
@@ -1972,6 +1983,13 @@ renderEditSizeTags();
 document.getElementById('editSizeName').value = '';
 document.getElementById('editSizePrice').value = '';
 document.getElementById('editSizeStock').value = '10';
+};
+window.addEditSizePreset = function(type) {
+const sizes = type === 'shoes' ? ['EU 36', 'EU 37', 'EU 38', 'EU 39', 'EU 40', 'EU 41', 'EU 42', 'EU 43', 'EU 44', 'EU 45', 'EU 46'] : ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+document.getElementById('editProductType').value = type;
+const stock = parseInt(document.getElementById('editSizeStock').value) || 0;
+sizes.forEach(size => { if (!editProductSizes.find(item => item.size === size)) editProductSizes.push({ size, price: null, stock }); });
+renderEditSizeTags();
 };
 window.removeEditSize = function(index) {
 editProductSizes.splice(index, 1);
@@ -2194,6 +2212,7 @@ document.getElementById('editProductId').value = productId;
 document.getElementById('editProductName').value = product.name || '';
 document.getElementById('editProductPrice').value = product.price || '';
 document.getElementById('editProductCategory').value = product.category || '';
+document.getElementById('editProductType').value = product.product_type || 'other';
 document.getElementById('editProductSubcategory').value = product.subcategory || '';
 document.getElementById('editProductBrand').value = product.brand || '';
 document.getElementById('editProductDiscountPercent').value = product.discount_percent || 0;
@@ -2284,6 +2303,7 @@ const productId = document.getElementById('editProductId').value;
 const name = document.getElementById('editProductName').value.trim();
 const price = parseFloat(document.getElementById('editProductPrice').value);
 const category = document.getElementById('editProductCategory').value.trim();
+const productType = document.getElementById('editProductType').value;
 const subcategory = document.getElementById('editProductSubcategory').value.trim();
 const brand = document.getElementById('editProductBrand').value.trim();
 const discountPercent = parseFloat(document.getElementById('editProductDiscountPercent').value) || 0;
@@ -2302,6 +2322,7 @@ price,
 category,
 subcategory: subcategory || '',
 brand: brand || '',
+product_type: productType,
 discount_percent: Math.max(0, Math.min(100, discountPercent)),
 description: description || '',
 hasSizes: hasSizes
@@ -2350,6 +2371,7 @@ window.addNewProduct = async function() {
 const name = document.getElementById('productName').value.trim();
 const price = parseFloat(document.getElementById('productPrice').value);
 const category = document.getElementById('productCategory').value.trim();
+const productType = document.getElementById('productType').value;
 const subcategory = document.getElementById('productSubcategory').value.trim();
 const brand = document.getElementById('productBrand').value.trim();
 const discountPercent = parseFloat(document.getElementById('productDiscountPercent').value) || 0;
@@ -2385,6 +2407,7 @@ price,
 category,
 subcategory: subcategory || '',
 brand: brand || '',
+product_type: productType,
 discount_percent: Math.max(0, Math.min(100, discountPercent)),
 image_url: currentImageBase64List[0],
 image_urls: currentImageBase64List.slice(0, 6),

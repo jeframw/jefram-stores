@@ -1820,7 +1820,7 @@
                 const orderData = {
                     customerId: currentUserDocId,
                     customer: currentUser,
-                    items: cart.map(i => ({ ...i })),
+                    items: cart.map(i => ({ ...i, size: i.selectedSize || i.size || null })),
                     subtotal: subtotal,
                     discount: discount,
                     total: total,

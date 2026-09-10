@@ -240,8 +240,21 @@
 
         window.addToCart = function() {
             if (!product) return;
+            let selectedSize = null;
+            if (product.hasSizes && Array.isArray(product.sizes) && product.sizes.length) {
+                selectedSize = document.getElementById('productSizeSelect')?.value || '';
+                if (!selectedSize) {
+                    setMessage('Please select a size before adding this product.', true);
+                    return;
+                }
+                const sizeData = product.sizes.find((item) => item.size === selectedSize);
+                if (!sizeData || Number(sizeData.stock) <= 0) {
+                    setMessage('That size is out of stock.', true);
+                    return;
+                }
+            }
             const cart = JSON.parse(localStorage.getItem('jefram-cart') || '[]');
-            const existing = cart.find(item => item.id === product.id);
+            const existing = cart.find(item => item.id === product.id && (item.selectedSize || '') === (selectedSize || ''));
             if (existing) {
                 existing.quantity = (Number(existing.quantity) || 1) + 1;
             } else {
@@ -250,6 +263,7 @@
                     name: product.name,
                     price: Number(currentUnitPrice || product.price || 0),
                     image: getImages(product)[0],
+                    selectedSize: selectedSize || null,
                     quantity: 1
                 });
             }
@@ -451,6 +465,14 @@
                             </div>
 
                             <div class="stock-pill ${stockStatus.className}">${stockStatus.label}</div>
+
+                            ${product.hasSizes && product.sizes && product.sizes.length ? `
+                                <label style="display:block; margin:16px 0 6px; font-weight:600;">${product.product_type === 'shoes' ? 'Shoe size (EU)' : product.product_type === 'clothing' ? 'Clothing size' : 'Size'}</label>
+                                <select id="productSizeSelect" class="size-select" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                                    <option value="">Select a size</option>
+                                    ${product.sizes.map(size => `<option value="${escapeHtml(size.size)}" ${Number(size.stock) <= 0 ? 'disabled' : ''}>${escapeHtml(size.size)}${Number(size.stock) <= 0 ? ' - Out of stock' : ''}</option>`).join('')}
+                                </select>
+                            ` : ''}
 
                             ${saleEntry ? `
                                 <div class="flash-box">

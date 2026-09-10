@@ -82,6 +82,7 @@ async function migrate() {
       );
     `);
     console.log('✓ Created/verified products table');
+    await client.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS product_type VARCHAR(30) DEFAULT 'other';");
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS orders (

@@ -527,17 +527,17 @@ app.post('/api/products', authMiddleware, productManagerOnly, async (req, res) =
   try {
     const {
       name, description, price, old_price, stock, category_id,
-      brand, sizes, image_urls, image_url, discount_percent, is_featured, is_flash_sale,
+      brand, product_type, sizes, image_urls, image_url, discount_percent, is_featured, is_flash_sale,
       category
     } = req.body;
     const resolvedCategoryId = await resolveCategoryId(category_id, category);
     const imageUrls = Array.isArray(image_urls) ? image_urls.filter(Boolean).slice(0, 6) : (image_url ? [image_url] : []);
 
     const result = await pool.query(
-      `INSERT INTO products (name, description, price, old_price, stock, category_id, brand, sizes, image_urls, discount_percent, is_featured, is_flash_sale)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      `INSERT INTO products (name, description, price, old_price, stock, category_id, brand, product_type, sizes, image_urls, discount_percent, is_featured, is_flash_sale)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        RETURNING *`,
-      [name, description, price, old_price, stock, resolvedCategoryId, brand, JSON.stringify(sizes || []), JSON.stringify(imageUrls), discount_percent || 0, is_featured || false, is_flash_sale || false]
+      [name, description, price, old_price, stock, resolvedCategoryId, brand, product_type || 'other', JSON.stringify(sizes || []), JSON.stringify(imageUrls), discount_percent || 0, is_featured || false, is_flash_sale || false]
     );
 
     res.status(201).json(productResponse(result.rows[0]));
@@ -559,7 +559,7 @@ app.put('/api/products/:id', authMiddleware, productManagerOnly, async (req, res
     const { id } = req.params;
     const {
       name, description, price, old_price, stock, category_id,
-      brand, sizes, image_urls, image_url, discount_percent, is_featured, is_flash_sale,
+      brand, product_type, sizes, image_urls, image_url, discount_percent, is_featured, is_flash_sale,
       category, in_flash_sale
     } = req.body;
     const resolvedCategoryId = await resolveCategoryId(category_id, category);
@@ -577,9 +577,9 @@ app.put('/api/products/:id', authMiddleware, productManagerOnly, async (req, res
     const result = await pool.query(
       `UPDATE products 
        SET name = $1, description = $2, price = $3, old_price = $4, stock = $5, 
-           category_id = $6, brand = $7, sizes = $8, image_urls = $9, 
-           discount_percent = $10, is_featured = $11, is_flash_sale = $12
-       WHERE id = $13
+             category_id = $6, brand = $7, product_type = $8, sizes = $9, image_urls = $10,
+             discount_percent = $11, is_featured = $12, is_flash_sale = $13
+           WHERE id = $14
        RETURNING *`,
       [name === undefined ? current.name : name,
         description === undefined ? current.description : description,
@@ -588,6 +588,7 @@ app.put('/api/products/:id', authMiddleware, productManagerOnly, async (req, res
         stock === undefined ? current.stock : stock,
         categoryValue,
         brand === undefined ? current.brand : brand,
+        product_type === undefined ? current.product_type || 'other' : product_type,
         JSON.stringify(sizes === undefined ? current.sizes || [] : sizes),
         JSON.stringify(imageUrls),
         discount_percent === undefined ? current.discount_percent : discount_percent,
@@ -1017,6 +1018,20 @@ app.get('/api/users', authMiddleware, adminOnly, async (req, res) => {
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+app.get('/api/users/:id', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, email, name, phone, whatsapp, address, address AS location, role, created_at FROM users WHERE id = $1',
+      [req.params.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'User not found' });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ error: 'Failed to fetch user' });
   }
 });
 
