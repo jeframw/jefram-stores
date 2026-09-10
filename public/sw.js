@@ -1,6 +1,6 @@
-const CACHE_NAME = 'jefram-stores-v2';
-const STATIC_CACHE = 'jefram-static-v2';
-const DYNAMIC_CACHE = 'jefram-dynamic-v2';
+const CACHE_NAME = 'jefram-stores-v3';
+const STATIC_CACHE = 'jefram-static-v3';
+const DYNAMIC_CACHE = 'jefram-dynamic-v3';
 
 const STATIC_ASSETS = [
     './',
@@ -13,7 +13,8 @@ const STATIC_ASSETS = [
     './faqs.html',
     './privacy-policy.html',
     './terms-of-service.html',
-    './admin/index.html'
+    './admin/index.html',
+    './api.js'
 ];
 
 self.addEventListener('install', function(event) {
