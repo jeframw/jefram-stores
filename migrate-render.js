@@ -48,6 +48,7 @@ async function migrate() {
       );
     `);
     console.log('✓ Created/verified users table');
+    await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS whatsapp VARCHAR(20);');
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS categories (

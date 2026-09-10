@@ -372,7 +372,7 @@ app.post('/api/auth/admin/recover', authMiddleware, adminOnly, async (req, res) 
 app.post('/api/auth/customer/register', async (req, res) => {
   const client = await pool.connect();
   try {
-    const { email, password, name, phone, promoCode } = req.body;
+    const { email, password, name, phone, whatsapp, address, promoCode } = req.body;
     if (!email || !password || !name) {
       return res.status(400).json({ error: 'Name, email and password are required' });
     }
@@ -401,8 +401,8 @@ app.post('/api/auth/customer/register', async (req, res) => {
     }
     const password_hash = await bcrypt.hash(password, 10);
     const result = await client.query(
-      'INSERT INTO users (email, password_hash, name, phone, role, registration_promo_code) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [email, password_hash, name, phone || null, 'customer', promo ? promo.code : null]
+      'INSERT INTO users (email, password_hash, name, phone, whatsapp, address, role, registration_promo_code) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [email, password_hash, name, phone || null, whatsapp || null, address || null, 'customer', promo ? promo.code : null]
     );
     if (promo) {
       await client.query(
@@ -443,7 +443,7 @@ app.post('/api/auth/customer/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     const token = jwt.sign({ id: customer.id, email: customer.email, role: customer.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: customer.id, email: customer.email, name: customer.name, phone: customer.phone, registration_promo_code: customer.registration_promo_code } });
+    res.json({ token, user: { id: customer.id, email: customer.email, name: customer.name, phone: customer.phone, whatsapp: customer.whatsapp, address: customer.address, location: customer.address, registration_promo_code: customer.registration_promo_code } });
   } catch (error) {
     console.error('Customer login error:', error);
     res.status(500).json({ error: 'Login failed' });
@@ -453,7 +453,7 @@ app.post('/api/auth/customer/login', async (req, res) => {
 // Get current user
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, email, name, phone, address, role, registration_promo_code FROM users WHERE id = $1', [req.user.id]);
+    const result = await pool.query('SELECT id, email, name, phone, whatsapp, address, address AS location, role, registration_promo_code FROM users WHERE id = $1', [req.user.id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -1012,7 +1012,7 @@ app.put('/api/config/:key', authMiddleware, adminOnly, async (req, res) => {
 
 app.get('/api/users', authMiddleware, adminOnly, async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, email, name, phone, address, role, created_at FROM users ORDER BY created_at DESC');
+    const result = await pool.query('SELECT id, email, name, phone, whatsapp, address, address AS location, role, created_at FROM users ORDER BY created_at DESC');
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -1023,15 +1023,16 @@ app.get('/api/users', authMiddleware, adminOnly, async (req, res) => {
 app.put('/api/users/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, phone, name, address } = req.body;
+    const { email, phone, whatsapp, name, address, location } = req.body;
+    const savedAddress = address !== undefined ? address : location;
 
     if (req.user.role !== 'admin' && req.user.id !== id) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
     const result = await pool.query(
-      'UPDATE users SET email = $1, phone = $2, name = $3, address = $4 WHERE id = $5 RETURNING *',
-      [email, phone, name, address, id]
+      'UPDATE users SET email = $1, phone = $2, whatsapp = $3, name = $4, address = $5 WHERE id = $6 RETURNING *',
+      [email, phone, whatsapp || null, name, savedAddress || null, id]
     );
 
     if (result.rows.length === 0) {
