@@ -1,6 +1,6 @@
-const CACHE_NAME = 'jefram-stores-v3';
-const STATIC_CACHE = 'jefram-static-v3';
-const DYNAMIC_CACHE = 'jefram-dynamic-v3';
+const CACHE_NAME = 'jefram-stores-v4';
+const STATIC_CACHE = 'jefram-static-v4';
+const DYNAMIC_CACHE = 'jefram-dynamic-v4';
 
 const STATIC_ASSETS = [
     './',

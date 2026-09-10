@@ -3615,9 +3615,11 @@ window.updateDeliveryFee = async function(orderId, deliveryFee) {
     }
 };
 // ===== LOAD USERS FUNCTION =====
+let customerManagementUsers = [];
 window.loadUsers = async function() {
     try {
         const users = await JeframAPI.getUsers();
+        customerManagementUsers = users;
         const usersList = document.getElementById('usersList');
         if (usersList) {
             usersList.innerHTML = '';
@@ -4182,7 +4184,8 @@ async function hashPassword(password) {
             const details = document.getElementById('userDetails');
             if (!modal || !details) return;
             try {
-                const u = await JeframAPI.getUser ? JeframAPI.getUser(userId) : null; // getCurrentUser fallback
+                const cachedUser = customerManagementUsers.find(user => String(user.id) === String(userId));
+                const u = cachedUser || (JeframAPI.getUser ? await JeframAPI.getUser(userId) : null);
                 if (!u) {
                     showToast('User not found', 'error');
                     return;
