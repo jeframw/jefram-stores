@@ -3293,10 +3293,10 @@ deliveryAgents = [];
 orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 for (const order of orders) {
 const orderId = order.id;
-const subtotal = order.subtotal || order.total;
+const subtotal = order.subtotal || 0;
 const discount = order.discount || 0;
 const deliveryFee = order.delivery_fee || 0;
-const totalWithDelivery = subtotal - discount + deliveryFee;
+const totalWithDelivery = order.total || (subtotal - discount + deliveryFee);
 const itemsWithSizes = order.items.map(i => i.name + (i.selectedSize ? ' (' + i.selectedSize + ')' : '')).join(', ');
 let paymentInfo = '';
 if (order.payment_method === 'mobile_money') {
@@ -3580,13 +3580,59 @@ window.sendCustomerWhatsApp = async function(order, deliveryFee, status) {
         const whatsappNumber = config.whatsappNumber;
         if (!whatsappNumber) return;
         let message = '';
-        const total = (order.total || 0) + (deliveryFee || 0);
+        const total = order.total || 0; // Total already includes delivery fee
+        const subtotal = order.subtotal || 0;
+        const discount = order.discount || 0;
+        
         if (status === 'confirmed') {
-            message = `Hello ${order.customer.name}, your order #${order.tracking_number} has been confirmed! Total: UGX ${total.toLocaleString()}. We'll notify you when it's shipped.`;
+            const itemsList = (order.items || []).map(item => 
+                `• ${item.product_name || item.name}${item.size ? ` (${item.size})` : ''} x${item.quantity} - UGX ${(item.price * item.quantity).toLocaleString()}`
+            ).join('\n');
+            
+            message = `🛍️ *ORDER CONFIRMED* 🛍️
+
+Hello ${order.customer?.name || 'Customer'},
+
+Your order #${order.tracking_number} has been confirmed!
+
+📦 *ORDER DETAILS:*
+${itemsList}
+
+💰 *PAYMENT SUMMARY:*
+Subtotal: UGX ${subtotal.toLocaleString()}
+${discount > 0 ? `Discount: -UGX ${discount.toLocaleString()}\n` : ''}Delivery Fee: UGX ${deliveryFee.toLocaleString()}
+*Total: UGX ${total.toLocaleString()}*
+
+📍 *DELIVERY INFORMATION:*
+${order.estimated_delivery_date ? `Estimated Delivery: ${new Date(order.estimated_delivery_date).toLocaleDateString()}\n` : ''}We'll notify you when it's shipped.
+
+Thank you for shopping with Jefram Stores! 🎉`;
         } else if (status === 'on_way') {
-            message = `Hello ${order.customer.name}, your order #${order.tracking_number} is on the way! Delivery fee: UGX ${deliveryFee.toLocaleString()}. Total: UGX ${total.toLocaleString()}.`;
+            message = `🚚 *ORDER ON THE WAY* 🚚
+
+Hello ${order.customer?.name || 'Customer'},
+
+Your order #${order.tracking_number} is on the way!
+
+💰 *ORDER SUMMARY:*
+Subtotal: UGX ${subtotal.toLocaleString()}
+${discount > 0 ? `Discount: -UGX ${discount.toLocaleString()}\n` : ''}Delivery Fee: UGX ${deliveryFee.toLocaleString()}
+*Total: UGX ${total.toLocaleString()}*
+
+Please have your payment ready. Thank you for shopping with Jefram Stores!`;
         } else if (status === 'delivered') {
-            message = `Hello ${order.customer.name}, your order #${order.tracking_number} has been delivered! Thank you for shopping with Jefram Stores. Please rate your experience.`;
+            message = `✅ *ORDER DELIVERED* ✅
+
+Hello ${order.customer?.name || 'Customer'},
+
+Your order #${order.tracking_number} has been delivered!
+
+💰 *FINAL AMOUNT:*
+Subtotal: UGX ${subtotal.toLocaleString()}
+${discount > 0 ? `Discount: -UGX ${discount.toLocaleString()}\n` : ''}Delivery Fee: UGX ${deliveryFee.toLocaleString()}
+*Total: UGX ${total.toLocaleString()}*
+
+Thank you for shopping with Jefram Stores! Please rate your experience. ⭐⭐⭐⭐⭐`;
         }
         const whatsappUrl = `https://wa.me/${whatsappNumber.replace('+', '')}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');

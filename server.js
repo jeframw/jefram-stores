@@ -712,7 +712,8 @@ app.post('/api/orders', authMiddleware, customerOnly, async (req, res) => {
     const {
       total, subtotal, shipping, discount,
       status, customer_name, customer_phone, customer_address, customer_city,
-      coupon_code, items, payment_method, mobile_money_number, payment_screenshot, order_notes
+      coupon_code, items, payment_method, mobile_money_number, payment_screenshot, order_notes,
+      customer
     } = req.body;
     let coupon = null;
     let verifiedDiscount = Number(discount) || 0;
@@ -758,7 +759,7 @@ app.post('/api/orders', authMiddleware, customerOnly, async (req, res) => {
       `INSERT INTO orders (customer_id, total, subtotal, shipping, discount, status, customer_name, customer_phone, customer_address, customer_city, coupon_code, payment_method, mobile_money_number, payment_screenshot, order_notes)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        RETURNING *`,
-      [req.user.id, verifiedTotal, subtotal, shipping, verifiedDiscount, status || 'pending', customer_name, customer_phone, customer_address, customer_city, coupon ? coupon.code : null, payment_method, mobile_money_number, payment_screenshot, order_notes]
+      [req.user.id, verifiedTotal, subtotal, shipping, verifiedDiscount, status || 'pending', customer_name || customer?.name, customer_phone || customer?.phone, customer_address || customer?.location, customer_city, coupon ? coupon.code : null, payment_method, mobile_money_number, payment_screenshot, order_notes]
     );
 
     const orderId = orderResult.rows[0].id;
@@ -1258,7 +1259,15 @@ app.put('/api/orders/:id/delivery-fee', authMiddleware, adminOnly, async (req, r
   try {
     const { id } = req.params;
     const { delivery_fee } = req.body;
-    const result = await pool.query('UPDATE orders SET delivery_fee = $1 WHERE id = $2 RETURNING *', [delivery_fee, id]);
+    const existing = await pool.query('SELECT subtotal, discount FROM orders WHERE id = $1', [id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Order not found' });
+    
+    // Recalculate total with new delivery fee
+    const subtotal = Number(existing.rows[0].subtotal) || 0;
+    const discount = Number(existing.rows[0].discount) || 0;
+    const newTotal = Math.max(0, subtotal - discount + (Number(delivery_fee) || 0));
+    
+    const result = await pool.query('UPDATE orders SET delivery_fee = $1, total = $2 WHERE id = $3 RETURNING *', [delivery_fee, newTotal, id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
     res.json(result.rows[0]);
   } catch (error) {
@@ -1334,14 +1343,21 @@ app.put('/api/orders/:id/confirm', authMiddleware, adminOnly, async (req, res) =
   try {
     const { id } = req.params;
     const { status, delivery_fee, estimated_delivery_date, tracking_number } = req.body;
-    const existing = await pool.query('SELECT tracking_number FROM orders WHERE id = $1', [id]);
+    const existing = await pool.query('SELECT tracking_number, subtotal, discount FROM orders WHERE id = $1', [id]);
     if (!existing.rows.length) return res.status(404).json({ error: 'Order not found' });
+    
     const generatedTrackingNumber = existing.rows[0].tracking_number || (status === 'confirmed'
       ? `JF-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
       : null);
+    
+    // Recalculate total with delivery fee
+    const subtotal = Number(existing.rows[0].subtotal) || 0;
+    const discount = Number(existing.rows[0].discount) || 0;
+    const newTotal = Math.max(0, subtotal - discount + (Number(delivery_fee) || 0));
+    
     const result = await pool.query(
-      `UPDATE orders SET status = $1, delivery_fee = $2, estimated_delivery_date = $3, tracking_number = $4 WHERE id = $5 RETURNING *`,
-      [status, delivery_fee, estimated_delivery_date, tracking_number || generatedTrackingNumber, id]
+      `UPDATE orders SET status = $1, delivery_fee = $2, estimated_delivery_date = $3, tracking_number = $4, total = $5 WHERE id = $6 RETURNING *`,
+      [status, delivery_fee, estimated_delivery_date, tracking_number || generatedTrackingNumber, newTotal, id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
     res.json(result.rows[0]);
