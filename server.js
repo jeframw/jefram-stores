@@ -794,10 +794,15 @@ app.put('/api/orders/:id/status', authMiddleware, adminOnly, async (req, res) =>
   try {
     const { id } = req.params;
     const { status } = req.body;
+    const trackingNumber = status === 'confirmed'
+      ? `JF-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+      : null;
 
     const result = await pool.query(
-      'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
-      [status, id]
+      `UPDATE orders SET status = $1,
+         tracking_number = CASE WHEN $1 = 'confirmed' AND tracking_number IS NULL THEN $3 ELSE tracking_number END
+       WHERE id = $2 RETURNING *`,
+      [status, id, trackingNumber]
     );
 
     if (result.rows.length === 0) {
@@ -1329,9 +1334,14 @@ app.put('/api/orders/:id/confirm', authMiddleware, adminOnly, async (req, res) =
   try {
     const { id } = req.params;
     const { status, delivery_fee, estimated_delivery_date, tracking_number } = req.body;
+    const existing = await pool.query('SELECT tracking_number FROM orders WHERE id = $1', [id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Order not found' });
+    const generatedTrackingNumber = existing.rows[0].tracking_number || (status === 'confirmed'
+      ? `JF-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+      : null);
     const result = await pool.query(
       `UPDATE orders SET status = $1, delivery_fee = $2, estimated_delivery_date = $3, tracking_number = $4 WHERE id = $5 RETURNING *`,
-      [status, delivery_fee, estimated_delivery_date, tracking_number, id]
+      [status, delivery_fee, estimated_delivery_date, tracking_number || generatedTrackingNumber, id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
     res.json(result.rows[0]);

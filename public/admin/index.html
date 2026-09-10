@@ -1472,8 +1472,8 @@ label { color: var(--text); }
 </div>
 <div class="order-confirm-box">
 <label>📦 Tracking Number</label>
-<input type="text" id="confirmTrackingNumber" placeholder="Enter tracking number">
-<small style="color:#666;">Optional tracking number for the customer</small>
+<input type="text" id="confirmTrackingNumber" placeholder="Generated automatically" readonly>
+<small style="color:#666;">Generated automatically when the order is accepted</small>
 </div>
 <div style="display: flex; gap: 10px; margin-top: 15px;">
 <button class="btn-success" onclick="confirmOrderWithDetails()" style="flex:1; padding:12px;">
@@ -3981,7 +3981,6 @@ window.confirmOrderWithDetails = async function() {
     if (!orderId) return;
     const deliveryFee = parseFloat(document.getElementById('confirmDeliveryFee').value) || 0;
     const deliveryDate = document.getElementById('confirmDeliveryDate').value;
-    const trackingNumber = document.getElementById('confirmTrackingNumber').value.trim();
     try {
         const order = await JeframAPI.getOrder(orderId);
         // order already fetched
@@ -3989,7 +3988,7 @@ window.confirmOrderWithDetails = async function() {
             status: 'confirmed',
             delivery_fee: deliveryFee,
             estimated_delivery_date: deliveryDate || null,
-            tracking_number: trackingNumber || (order && order.tracking_number) || null
+            tracking_number: order && order.tracking_number || null
         });
         showToast('Order confirmed!', 'success');
         closeOrderConfirmModal();
