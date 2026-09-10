@@ -24,7 +24,7 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : false,
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
 // Request logging
@@ -415,6 +415,13 @@ app.post('/api/products', authMiddleware, productManagerOnly, async (req, res) =
     console.error('Error creating product:', error);
     res.status(500).json({ error: 'Failed to create product' });
   }
+});
+
+app.use((error, req, res, next) => {
+  if (error.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'Product images are too large. Use smaller images or fewer photos.' });
+  }
+  next(error);
 });
 
 app.put('/api/products/:id', authMiddleware, productManagerOnly, async (req, res) => {
