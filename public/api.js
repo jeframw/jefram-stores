@@ -110,6 +110,12 @@ window.JeframAPI = {
     method: 'PUT',
     body: JSON.stringify({ status })
   }),
+  updateTrackingNumber: (id, tracking_number) => api(`/api/orders/${id}/tracking`, {
+    method: 'PUT', body: JSON.stringify({ tracking_number })
+  }),
+  updateEstimatedDelivery: (id, estimated_delivery_date) => api(`/api/orders/${id}/estimated-delivery`, {
+    method: 'PUT', body: JSON.stringify({ estimated_delivery_date })
+  }),
 
   confirmOrder: (id, data) => api(`/api/orders/${id}/confirm`, {
     method: 'PUT', body: JSON.stringify(data)
