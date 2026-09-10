@@ -187,7 +187,7 @@
                 <div class="review-card">
                     <div class="review-rating">${'★'.repeat(Number(review.rating || 0))}${'☆'.repeat(5 - Number(review.rating || 0))}</div>
                     <div class="review-comment">${escapeHtml(review.comment || 'Great product!')}</div>
-                    <div class="meta" style="margin-top:6px;"><span>${escapeHtml(review.userName || 'Guest')}</span></div>
+                    <div class="meta" style="margin-top:6px;"><span>${escapeHtml(review.user_name || review.userName || 'Customer')}</span></div>
                 </div>
             `).join('');
         }
@@ -289,6 +289,11 @@
         };
 
         window.submitReview = async function() {
+            if (!localStorage.getItem('jefram_token')) {
+                document.getElementById('reviewStatus').textContent = 'Please sign in before submitting a review.';
+                document.getElementById('reviewStatus').className = 'status-message error';
+                return;
+            }
             if (selectedRating === 0) {
                 document.getElementById('reviewStatus').textContent = 'Please select a rating';
                 document.getElementById('reviewStatus').className = 'status-message error';
@@ -305,8 +310,8 @@
 
             try {
                 await JeframAPI.createReview({
-                    productId: product.id,
-                    productName: product.name,
+                    product_id: product.id,
+                    product_name: product.name,
                     rating: selectedRating,
                     comment: comment
                 });
@@ -326,7 +331,7 @@
                 await loadProduct();
             } catch (error) {
                 console.error('Error submitting review:', error);
-                document.getElementById('reviewStatus').textContent = 'Failed to submit review. Please try again.';
+                document.getElementById('reviewStatus').textContent = error.message || 'Failed to submit review. Please try again.';
                 document.getElementById('reviewStatus').className = 'status-message error';
             }
         };

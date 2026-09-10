@@ -832,15 +832,16 @@ app.put('/api/orders/:id/rating', authMiddleware, customerOnly, async (req, res)
 app.get('/api/reviews', async (req, res) => {
   try {
     const { product_id } = req.query;
-    let query = 'SELECT * FROM reviews';
+    let query = `SELECT r.*, u.name AS user_name
+                 FROM reviews r LEFT JOIN users u ON u.id = r.user_id`;
     const params = [];
 
     if (product_id) {
-      query += ' WHERE product_id = $1';
+      query += ' WHERE r.product_id = $1';
       params.push(product_id);
     }
 
-    query += ' ORDER BY created_at DESC';
+    query += ' ORDER BY r.created_at DESC';
 
     const result = await pool.query(query, params);
     res.json(result.rows);
@@ -854,12 +855,19 @@ app.post('/api/reviews', authMiddleware, async (req, res) => {
   try {
     const { product_id, product_name, rating, comment } = req.body;
     const user_id = req.user.id;
+    if (!product_id || !rating || Number(rating) < 1 || Number(rating) > 5 || !String(comment || '').trim()) {
+      return res.status(400).json({ error: 'Product, rating, and review comment are required' });
+    }
+    const product = await pool.query('SELECT id, name FROM products WHERE id = $1', [product_id]);
+    if (!product.rows.length) return res.status(404).json({ error: 'Product not found' });
+    const existing = await pool.query('SELECT id FROM reviews WHERE product_id = $1 AND user_id = $2', [product_id, user_id]);
+    if (existing.rows.length) return res.status(409).json({ error: 'You have already reviewed this product' });
 
     const result = await pool.query(
       `INSERT INTO reviews (product_id, product_name, user_id, rating, comment)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [product_id, product_name, user_id, rating, comment]
+      [product_id, product_name || product.rows[0].name, user_id, Number(rating), String(comment).trim()]
     );
 
     await pool.query(
