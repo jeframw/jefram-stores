@@ -13,7 +13,10 @@ const clientConfig = process.env.DATABASE_URL
     };
 
 async function migrate() {
-  const client = new Client(clientConfig);
+  const client = new Client({
+    ...clientConfig,
+    ...(process.env.DATABASE_URL ? { ssl: { rejectUnauthorized: false } } : {})
+  });
   
   try {
     console.log('Connecting to Render database...');

@@ -43,8 +43,8 @@ async function copyTable(source, target, table) {
 }
 
 async function copyDatabase() {
-  const source = new Client({ connectionString: sourceUrl });
-  const target = new Client({ connectionString: targetUrl });
+  const source = new Client({ connectionString: sourceUrl, ssl: { rejectUnauthorized: false } });
+  const target = new Client({ connectionString: targetUrl, ssl: { rejectUnauthorized: false } });
 
   try {
     await source.connect();
