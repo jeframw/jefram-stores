@@ -1106,16 +1106,38 @@ app.put('/api/users/:id/password', authMiddleware, async (req, res) => {
 });
 
 app.delete('/api/users/:id', authMiddleware, adminOnly, async (req, res) => {
+  const client = await pool.connect();
   try {
     const { id } = req.params;
-    const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
+    if (id === req.user.id) {
+      return res.status(400).json({ error: 'You cannot delete your own account' });
+    }
+    await client.query('BEGIN');
+    const existing = await client.query('SELECT id, role FROM users WHERE id = $1 FOR UPDATE', [id]);
+    if (!existing.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (existing.rows[0].role === 'admin') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Admin accounts cannot be deleted here' });
+    }
+    await client.query('DELETE FROM coupon_redemptions WHERE user_id = $1', [id]);
+    await client.query('DELETE FROM reviews WHERE user_id = $1', [id]);
+    await client.query('UPDATE orders SET delivery_agent_id = NULL WHERE delivery_agent_id = $1', [id]);
+    await client.query('DELETE FROM orders WHERE customer_id = $1', [id]);
+    const result = await client.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
+    await client.query('COMMIT');
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
     console.error('Error deleting user:', error);
     res.status(500).json({ error: 'Failed to delete user' });
+  } finally {
+    client.release();
   }
 });
 

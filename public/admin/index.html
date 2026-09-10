@@ -3637,6 +3637,7 @@ window.loadUsers = async function() {
                         <td>UGX ${(Number(user.totalSpent) || 0).toLocaleString()}</td>
                         <td>
                             <button onclick="viewUser('${id}')" style="background:#667eea; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">View</button>
+                            <button onclick="deleteCustomer('${id}')" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-left:5px;">Delete</button>
                         </td>
                     </tr>
                 `;
@@ -3644,6 +3645,20 @@ window.loadUsers = async function() {
         }
     } catch (error) {
         console.error('Error loading users:', error);
+    }
+};
+window.deleteCustomer = async function(userId) {
+    const user = customerManagementUsers.find(item => String(item.id) === String(userId));
+    const userName = user?.name || user?.email || 'this user';
+    if (!confirm(`Delete ${userName}? This removes the account and its orders, reviews, and coupon redemptions.`)) return;
+    try {
+        await JeframAPI.deleteUser(userId);
+        showToast('Customer deleted successfully', 'success');
+        await loadUsers();
+        if (typeof loadStats === 'function' && isMaster) loadStats();
+    } catch (error) {
+        console.error('Error deleting customer:', error);
+        showToast(error.message || 'Failed to delete customer', 'error');
     }
 };
 // ===== LOAD ADMINS FUNCTION =====
