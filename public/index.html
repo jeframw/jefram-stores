@@ -2942,7 +2942,7 @@
             const heartClass = inWishlist ? 'fas fa-heart' : 'far fa-heart';
             const heartColor = inWishlist ? 'color:#ff4757;' : '';
             
-            const rating = product.average_rating || product.rating || 0;
+            const rating = Number(product.average_rating || product.rating || 0);
             const reviewCount = product.review_count || 0;
             const filledStars = Math.floor(rating);
             const hasHalfStar = rating - filledStars >= 0.5;

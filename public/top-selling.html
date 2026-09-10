@@ -84,7 +84,7 @@
             const originalPrice = Number(product.price || 0);
             const discountedPrice = discount > 0 ? Math.max(0, Math.round(originalPrice * (1 - discount / 100))) : originalPrice;
             const discountBadge = discount > 0 ? `<div class="discount-badge">-${discount}%</div>` : '';
-            const rating = product.average_rating || product.rating || 0;
+            const rating = Number(product.average_rating || product.rating || 0);
             const reviewCount = product.review_count || 0;
             const filledStars = Math.floor(rating);
             const emptyStars = 5 - filledStars;
