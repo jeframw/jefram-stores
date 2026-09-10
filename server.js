@@ -124,15 +124,22 @@ app.get('/api/chat/messages/:conversationId', async (req, res) => {
 app.get('/api/admin/chat/conversations', authMiddleware, adminOnly, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT conversation_id,
-             MAX(created_at) AS last_message_at,
-             (array_agg(message ORDER BY created_at DESC, id DESC))[1] AS last_message,
-             (array_agg(customer_name ORDER BY created_at DESC, id DESC))[1] AS customer_name,
-             (array_agg(customer_email ORDER BY created_at DESC, id DESC))[1] AS customer_email,
-             COUNT(*) FILTER (WHERE sender_type = 'customer' AND read_at IS NULL)::int AS unread_count
-      FROM support_messages
-      GROUP BY conversation_id
-      ORDER BY last_message_at DESC
+      WITH latest AS (
+        SELECT DISTINCT ON (conversation_id)
+               conversation_id, message AS last_message, customer_name, customer_email, created_at AS last_message_at
+        FROM support_messages
+        ORDER BY conversation_id, created_at DESC, id DESC
+      ), unread AS (
+        SELECT conversation_id, COUNT(*)::int AS unread_count
+        FROM support_messages
+        WHERE sender_type = 'customer' AND read_at IS NULL
+        GROUP BY conversation_id
+      )
+      SELECT latest.conversation_id, latest.last_message_at, latest.last_message,
+             latest.customer_name, latest.customer_email, COALESCE(unread.unread_count, 0) AS unread_count
+      FROM latest
+      LEFT JOIN unread ON unread.conversation_id = latest.conversation_id
+      ORDER BY latest.last_message_at DESC
     `);
     res.json(result.rows);
   } catch (error) {
