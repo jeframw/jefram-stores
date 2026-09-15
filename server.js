@@ -3,18 +3,129 @@ const cors = require('cors');
 const pool = require('./db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
+const jose = require('jose');
 const path = require('path');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 
 if (!JWT_SECRET || JWT_SECRET.length < 32) {
   throw new Error('JWT_SECRET must be set to a secure value of at least 32 characters.');
 }
 
-// Middleware
+// ==================== OTP STORE ====================
+const otpStore = new Map();
+const OTP_EXPIRY_MS = 5 * 60 * 1000;
+const OTP_LENGTH = 6;
+const OTP_MAX_ATTEMPTS = 5;
+
+function generateOtp() {
+  return crypto.randomInt(100000, 999999).toString();
+}
+
+function storeOtp(phone, otp, purpose = 'login') {
+  const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
+  otpStore.set(phone, { otp, purpose, expiresAt, attempts: 0, maxAttempts: OTP_MAX_ATTEMPTS, createdAt: new Date() });
+  return expiresAt;
+}
+
+function verifyOtp(phone, otp) {
+  const stored = otpStore.get(phone);
+  if (!stored) return { valid: false, error: 'OTP expired or not found. Please request a new one.' };
+  if (new Date() > stored.expiresAt) {
+    otpStore.delete(phone);
+    return { valid: false, error: 'OTP expired. Please request a new one.' };
+  }
+  stored.attempts++;
+  if (stored.attempts > stored.maxAttempts) {
+    otpStore.delete(phone);
+    return { valid: false, error: 'Too many attempts. Please request a new OTP.' };
+  }
+  if (stored.otp !== otp) {
+    return { valid: false, error: 'Invalid OTP. Please try again.' };
+  }
+  otpStore.delete(phone);
+  return { valid: true };
+}
+
+function sendSms(phone, message) {
+  const twilioSid = process.env.TWILIO_SID;
+  const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+  const twilioFrom = process.env.TWILIO_FROM_NUMBER;
+  if (twilioSid && twilioToken && twilioFrom) {
+    const twilio = require('twilio')(twilioSid, twilioToken);
+    return twilio.messages.create({ body: message, from: twilioFrom, to: phone });
+  }
+  console.log(`[SMS] To: ${phone} | Message: ${message}`);
+  return Promise.resolve({ sid: 'mock-sms-sid' });
+}
+
+async function verifyGoogleToken(idToken) {
+  const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: GOOGLE_CLIENT_ID,
+  });
+  return ticket.getPayload();
+}
+
+async function verifyAppleToken(identityToken) {
+    const unsigned = jose.decodeJwt(identityToken);
+    const jwks = await jose.fetch('https://appleid.apple.com/auth/keys');
+    const signingKey = await jose.importJWK(await jwks.getSigningKey(unsigned.header.kid));
+    const { payload } = await jose.compactVerify(identityToken, signingKey);
+    const decoded = JSON.parse(Buffer.from(payload).toString());
+    if (decoded.iss !== 'https://appleid.apple.com') {
+      throw new Error('Invalid Apple token issuer');
+    }
+    const validAudiences = [process.env.APPLE_CLIENT_ID, 'com.jefram.stores'].filter(Boolean);
+    if (!validAudiences.includes(decoded.aud)) {
+      throw new Error('Invalid Apple token audience');
+    }
+    if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+      throw new Error('Apple token expired');
+    }
+    return decoded;
+  }
+
+async function findOrCreateUserBySocial(provider, providerId, profile) {
+  const email = profile.email;
+  const existingByProvider = await pool.query(
+    'SELECT * FROM users WHERE google_id = $1 OR apple_id = $2',
+    [provider === 'google' ? providerId : null, provider === 'apple' ? providerId : null]
+  );
+  if (existingByProvider.rows.length > 0) {
+    return existingByProvider.rows[0];
+  }
+  const existingByEmail = email ? await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]) : null;
+  if (existingByEmail && existingByEmail.rows.length > 0) {
+    const user = existingByEmail.rows[0];
+    if (provider === 'google' && !user.google_id) {
+      await pool.query('UPDATE users SET google_id = $1 WHERE id = $2', [providerId, user.id]);
+      user.google_id = providerId;
+    }
+    if (provider === 'apple' && !user.apple_id) {
+      await pool.query('UPDATE users SET apple_id = $1 WHERE id = $2', [providerId, user.id]);
+      user.apple_id = providerId;
+    }
+    return user;
+  }
+  const result = await pool.query(
+    `INSERT INTO users (name, email, phone, google_id, apple_id, role)
+     VALUES ($1, $2, $3, $4, $5, 'customer') RETURNING *`,
+    [profile.name || profile.given_name || profile.family_name || 'User', email, profile.phone || null,
+     provider === 'google' ? providerId : null, provider === 'apple' ? providerId : null]
+  );
+  return result.rows[0];
+}
+
+// ==================== MIDDLEWARE ====================
+
 app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -36,7 +147,6 @@ app.use((req, res, next) => {
 // Health check
 app.get('/health', async (req, res) => {
   try {
-    // Test database connection
     await pool.query('SELECT 1');
     res.json({ status: 'ok', database: 'connected' });
   } catch (error) {
@@ -45,7 +155,7 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// ==================== AUTH MIDDLEWARE ====================
+// ==================== SUPPORT CHAT ====================
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -453,7 +563,7 @@ app.post('/api/auth/customer/login', async (req, res) => {
 // Get current user
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, email, name, phone, whatsapp, address, address AS location, role, registration_promo_code FROM users WHERE id = $1', [req.user.id]);
+    const result = await pool.query('SELECT id, email, name, phone, whatsapp, address, address AS location, role, registration_promo_code, google_id, apple_id FROM users WHERE id = $1', [req.user.id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -461,6 +571,181 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+// ==================== AUTH CONFIG ====================
+
+app.get('/api/auth/config', async (req, res) => {
+  res.json({
+    googleEnabled: Boolean(process.env.GOOGLE_CLIENT_ID),
+    googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+    appleEnabled: Boolean(process.env.APPLE_SERVICE_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY),
+    phoneOtpEnabled: true,
+    twilioConfigured: Boolean(process.env.TWILIO_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER)
+  });
+});
+
+// ==================== OTP AUTH ROUTES ====================
+
+app.post('/api/auth/customer/send-otp', async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone || !phone.match(/^[0-9]{10,13}$/)) {
+      return res.status(400).json({ error: 'Valid phone number required (10-13 digits)' });
+    }
+    const otp = generateOtp();
+    storeOtp(phone, otp, 'login');
+    await sendSms(phone, `Your Jefram Stores verification code is: ${otp}. Valid for 5 minutes.`);
+    res.json({ message: 'OTP sent successfully', expiresIn: OTP_EXPIRY_MS });
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({ error: 'Failed to send OTP' });
+  }
+});
+
+app.post('/api/auth/customer/verify-otp', async (req, res) => {
+  try {
+    const { phone, otp } = req.body;
+    if (!phone || !otp) {
+      return res.status(400).json({ error: 'Phone number and OTP are required' });
+    }
+    const verification = verifyOtp(phone, otp);
+    if (!verification.valid) {
+      return res.status(401).json({ error: verification.error });
+    }
+    let user = await pool.query('SELECT * FROM users WHERE phone = $1 AND role = $2', [phone, 'customer']);
+    if (user.rows.length === 0) {
+      const result = await pool.query(
+        'INSERT INTO users (phone, name, role) VALUES ($1, $2, $3) RETURNING *',
+        [phone, 'Customer', 'customer']
+      );
+      user = result;
+    }
+    const u = user.rows[0];
+    const token = jwt.sign({ id: u.id, email: u.email, role: u.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: u.id, email: u.email, name: u.name, phone: u.phone, whatsapp: u.whatsapp, address: u.address, role: u.role } });
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
+app.post('/api/auth/customer/phone-register', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { phone, otp, name, whatsapp, address, promoCode } = req.body;
+    if (!phone || !otp || !name) {
+      return res.status(400).json({ error: 'Phone, OTP and name are required' });
+    }
+    const verification = verifyOtp(phone, otp);
+    if (!verification.valid) {
+      return res.status(401).json({ error: verification.error });
+    }
+    const phoneClean = phone.replace(/\D/g, '');
+    if (!phoneClean.match(/^[0-9]{10,13}$/)) {
+      return res.status(400).json({ error: 'Valid phone number required' });
+    }
+    await client.query('BEGIN');
+    const existing = await client.query('SELECT * FROM users WHERE LOWER(phone) = LOWER($1) AND role = $2', [phone, 'customer']);
+    if (existing.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Phone number already registered' });
+    }
+    let promo = null;
+    if (promoCode) {
+      const promoResult = await client.query(
+        `SELECT * FROM coupons
+         WHERE UPPER(code) = UPPER($1) AND active = true AND is_registration_promo = true
+           AND (valid_from IS NULL OR valid_from <= NOW())
+           AND (valid_until IS NULL OR valid_until >= NOW())
+           AND (max_uses IS NULL OR used_count < max_uses)
+         FOR UPDATE`,
+        [String(promoCode).trim()]
+      );
+      if (!promoResult.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Invalid or expired registration promo code' });
+      }
+      promo = promoResult.rows[0];
+    }
+    const result = await client.query(
+      'INSERT INTO users (phone, name, whatsapp, address, role) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [phone, name, whatsapp || null, address || null, 'customer']
+    );
+    if (promo) {
+      await client.query(
+        `INSERT INTO coupon_redemptions (coupon_id, user_id, redemption_type) VALUES ($1, $2, 'registration')`,
+        [promo.id, result.rows[0].id]
+      );
+      await client.query('UPDATE coupons SET used_count = used_count + 1 WHERE id = $1', [promo.id]);
+    }
+    await client.query('COMMIT');
+    const u = result.rows[0];
+    const token = jwt.sign({ id: u.id, email: u.email, role: u.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token, user: u, promoApplied: Boolean(promo) });
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error('Phone register error:', error);
+    res.status(500).json({ error: 'Registration failed' });
+  } finally {
+    client.release();
+  }
+});
+
+// ==================== SOCIAL LOGIN ROUTES ====================
+
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ error: 'Google ID token is required' });
+    }
+    if (!GOOGLE_CLIENT_ID) {
+      return res.status(503).json({ error: 'Google login is not configured' });
+    }
+    const payload = await verifyGoogleToken(token);
+    const profile = {
+      name: payload.name || payload.given_name || payload.family_name || 'User',
+      email: payload.email,
+      phone: payload.phone_number || null,
+      given_name: payload.given_name,
+      family_name: payload.family_name,
+      picture: payload.picture
+    };
+    const user = await findOrCreateUserBySocial('google', payload.sub, profile);
+    const tokenJwt = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token: tokenJwt, user: { id: user.id, email: user.email, name: user.name, phone: user.phone, whatsapp: user.whatsapp, address: user.address, role: user.role, google_id: user.google_id } });
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(401).json({ error: 'Google authentication failed' });
+  }
+});
+
+app.post('/api/auth/apple', async (req, res) => {
+  try {
+    const { identityToken, firstName, lastName, email } = req.body;
+    if (!identityToken) {
+      return res.status(400).json({ error: 'Apple identity token is required' });
+    }
+    if (!process.env.APPLE_SERVICE_ID || !process.env.APPLE_KEY_ID || !process.env.APPLE_PRIVATE_KEY) {
+      return res.status(503).json({ error: 'Apple login is not configured' });
+    }
+    const payload = await verifyAppleToken(identityToken);
+    const appleId = payload.sub;
+    const profile = {
+      name: (firstName && lastName) ? `${firstName} ${lastName}` : (payload.name?.givenName ? `${payload.name.givenName} ${payload.name.familyName || ''}` : 'User'),
+      email: email || payload.email || null,
+      phone: null,
+      given_name: payload.name?.givenName,
+      family_name: payload.name?.familyName
+    };
+    const user = await findOrCreateUserBySocial('apple', appleId, profile);
+    const tokenJwt = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token: tokenJwt, user: { id: user.id, email: user.email, name: user.name, phone: user.phone, whatsapp: user.whatsapp, address: user.address, role: user.role, apple_id: user.apple_id } });
+  } catch (error) {
+    console.error('Apple login error:', error);
+    res.status(401).json({ error: 'Apple authentication failed' });
   }
 });
 

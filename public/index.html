@@ -350,6 +350,15 @@
             border: 1px solid rgba(255,255,255,0.45);
             color: #1a1a2e;
         }
+        .auth-tabs { display: flex; gap: 0; margin-bottom: 15px; border-radius: 8px; overflow: hidden; border: 2px solid rgba(255,255,255,0.3); }
+        .auth-tab { flex: 1; padding: 10px; background: transparent; border: none; color: rgba(255,255,255,0.7); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .auth-tab.active { background: rgba(255,255,255,0.25); color: #fff; }
+        .social-login-btn { width: 100%; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; border: none; transition: transform 0.2s; }
+        .social-login-btn:hover { transform: translateY(-1px); }
+        .google-btn { background: #fff; color: #333; border: 2px solid #e0e0e0; }
+        .apple-btn { background: #000; color: #fff; }
+        .otp-input { text-align: center; letter-spacing: 8px; font-size: 24px; font-weight: 700; }
+        .auth-section { display: block; }
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #eee; }
         .cart-total { font-size: 1.3rem; font-weight: bold; margin: 1rem 0; text-align: right; }
         .payment-options { margin: 1rem 0; }
@@ -460,7 +469,15 @@
             .main-content { padding: 0.5rem; }
         }
     </style>
-</head>
+    <!-- Google API Client -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Apple Sign-In for Web -->
+    <script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" async defer></script>
+    <script>
+        window.GOOGLE_CLIENT_ID = '';
+        window.APPLE_CLIENT_ID = 'com.jefram.stores';
+    </script>
+    </head>
 <body>
     <script>
         if ('serviceWorker' in navigator) {
@@ -472,6 +489,11 @@
                 });
             });
         }
+        window.addEventListener('load', function() {
+            if (typeof window.initGoogleSignIn === 'function') {
+                window.initGoogleSignIn();
+            }
+        });
     </script>
     <div class="notification-prompt" id="notificationPrompt">
         <p>🔔 Receive order updates instantly!</p>
@@ -808,16 +830,59 @@
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <h2>Sign In</h2>
-            <div class="register-form">
-                <input type="email" id="loginPhone" placeholder="Email" required>
-                <input type="password" id="loginPassword" placeholder="Password" required>
-                <button onclick="window.loginUser()" style="background: #667eea; color: white; padding: 12px; border: none; border-radius: 8px;">Sign In</button>
-                <div id="customerLoginError" role="alert" style="display:none; margin-top:10px; padding:10px; color:#a61b1b; background:#fee2e2; border:1px solid #fecaca; border-radius:6px;"></div>
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="window.switchAuthTab('email')">Email</button>
+                <button class="auth-tab" onclick="window.switchAuthTab('phone')">Phone</button>
             </div>
+            <div id="emailAuthSection" class="auth-section">
+                <div class="register-form">
+                    <input type="email" id="loginPhone" placeholder="Email" required>
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                    <button onclick="window.loginUser()" style="background: #667eea; color: white; padding: 12px; border: none; border-radius: 8px;">Sign In</button>
+                </div>
+            </div>
+            <div id="phoneAuthSection" class="auth-section" style="display:none;">
+                <div class="register-form">
+                    <input type="tel" id="loginPhoneOtp" placeholder="Phone Number (e.g., 07XX XXX XXX)" required>
+                    <button onclick="window.sendLoginOtp()" style="background: #667eea; color: white; padding: 12px; border: none; border-radius: 8px;">Send OTP</button>
+                </div>
+            </div>
+            <div id="socialAuthSection" class="social-login-section">
+                <button id="googleSignInBtn" onclick="window.googleLogin()" class="social-login-btn google-btn" type="button">
+                    <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                    Continue with Google
+                </button>
+                <button id="appleSignInBtn" onclick="window.appleLogin()" class="social-login-btn apple-btn" type="button">
+                    <svg width="18" height="22" viewBox="0 0 384 512"><path fill="#fff" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4.2 210.3 4.2 300.2c0 27.9 4.2 55.8 12.6 82.9 12.4 32.1 42.1 73.1 75.7 72.6 22.1-.7 38.3-13.7 72.1-13.7 31.5 0 47.4 13.7 72.1 13.4 30.4.3 49.1-31.1 75.7-72.9 12.6-29.2 17.9-56.9 18.1-59.1-1.1-.1-3.5-1.2-6.5-3.4zm-20.7-137.1c-24.4-29.2-57.2-32.4-71.5-33.4-20.2-.7-66.8 7.3-88.6 32.7-16.7 19.4-30.1 51.6-26.4 82.1 24.3 1.9 54.2-3.5 79.8-23.4 16.7-12.6 31.9-32.7 38.7-51.4z"/></svg>
+                    Continue with Apple
+                </button>
+            </div>
+            <div id="customerLoginError" role="alert" style="display:none; margin-top:10px; padding:10px; color:#a61b1b; background:#fee2e2; border:1px solid #fecaca; border-radius:6px;"></div>
             <p style="margin-top: 10px; text-align: center;">Don't have an account? <a href="#" onclick="window.closeLoginModal(); window.openRegisterModal();" style="color: #667eea;">Register</a></p>
             <p style="margin-top: 5px; text-align: center;"><a href="#" onclick="window.closeLoginModal(); window.openPasswordResetModal();" style="color: #667eea; font-size: 14px;">Forgot Password?</a></p>
             <button onclick="window.closeLoginModal()" style="margin-top: 1rem; width: 100%; padding: 10px; background: #f5f5f5; border: none; border-radius: 8px;">Close</button>
         </div>
+    </div>
+
+    <!-- OTP Modal -->
+    <div id="otpModal" class="modal">
+        <div class="modal-content">
+            <h2>Verify Phone Number</h2>
+            <p style="text-align: center; color: #666; margin-bottom: 15px; font-size: 14px;">Enter the 6-digit code sent to your phone</p>
+            <div class="register-form">
+                <input type="tel" id="otpInput" placeholder="Enter 6-digit code" maxlength="6" required>
+                <p id="otpTimer" style="text-align: center; font-size: 13px; color: #666; margin-top: 5px;"></p>
+                <button onclick="window.verifyOtp()" style="background: #667eea; color: white; padding: 12px; border: none; border-radius: 8px;">Verify</button>
+                <button onclick="window.resendOtp()" id="resendOtpBtn" style="background: transparent; color: #667eea; padding: 8px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; width: 100%; display: none;">Resend OTP</button>
+            </div>
+            <div id="otpError" role="alert" style="display:none; margin-top:10px; padding:10px; color:#a61b1b; background:#fee2e2; border:1px solid #fecaca; border-radius:6px;"></div>
+            <button onclick="window.closeOtpModal()" style="margin-top: 1rem; width: 100%; padding: 10px; background: #f5f5f5; border: none; border-radius: 8px;">Close</button>
+        </div>
+    </div>
+
+    <!-- Google Login (hidden, used for OAuth callback) -->
+    <div id="googleLoginSection" style="display:none;">
+        <div id="gSignInWrapper" style="display:none;"></div>
     </div>
 
     <!-- Password Reset Modal -->
@@ -2078,9 +2143,41 @@
             }
         };
 
+        let authMode = 'email'; // 'email' or 'phone'
+        let otpPhone = '';
+        let otpTimerInterval = null;
+        let otpTimerSeconds = 0;
+
+        window.switchAuthTab = function(mode) {
+            authMode = mode;
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            if (mode === 'email') {
+                document.querySelectorAll('.auth-tab')[0].classList.add('active');
+                document.getElementById('emailAuthSection').style.display = 'block';
+                document.getElementById('phoneAuthSection').style.display = 'none';
+            } else {
+                document.querySelectorAll('.auth-tab')[1].classList.add('active');
+                document.getElementById('emailAuthSection').style.display = 'none';
+                document.getElementById('phoneAuthSection').style.display = 'block';
+            }
+            document.getElementById('customerLoginError').style.display = 'none';
+        };
+
         window.loginUser = async function() {
             const errorEl = document.getElementById('customerLoginError');
             errorEl.style.display = 'none';
+
+            if (authMode === 'phone') {
+                const phone = document.getElementById('loginPhoneOtp').value.trim();
+                if (!phone) {
+                    errorEl.textContent = 'Please enter your phone number.';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+                await window.sendLoginOtp();
+                return;
+            }
+
             const email = document.getElementById('loginPhone').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
             if (!email || !password) {
@@ -2104,11 +2201,227 @@
                 document.getElementById('loginPassword').focus();
             }
         };
+
+        window.sendLoginOtp = async function() {
+            const errorEl = document.getElementById('customerLoginError');
+            errorEl.style.display = 'none';
+            const phone = document.getElementById('loginPhoneOtp').value.trim();
+            if (!phone || !phone.match(/^[0-9]{10,13}$/)) {
+                errorEl.textContent = 'Valid phone number required (10-13 digits)';
+                errorEl.style.display = 'block';
+                return;
+            }
+            const loginBtn = document.querySelector('#phoneAuthSection button');
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Sending...';
+            try {
+                await JeframAPI.customerLoginByPhone(phone);
+                otpPhone = phone;
+                window.openOtpModal();
+                window.showToast('OTP sent! Check your phone.', 'success');
+            } catch (e) {
+                errorEl.textContent = 'Failed to send OTP. Please try again.';
+                errorEl.style.display = 'block';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Send OTP';
+            }
+        };
+
+        window.openOtpModal = function() {
+            document.getElementById('otpModal').style.display = 'flex';
+            document.getElementById('otpInput').value = '';
+            document.getElementById('otpError').style.display = 'none';
+            startOtpTimer();
+        };
+
+        window.closeOtpModal = function() {
+            document.getElementById('otpModal').style.display = 'none';
+            if (otpTimerInterval) { clearInterval(otpTimerInterval); otpTimerInterval = null; }
+        };
+
+        window.startOtpTimer = function() {
+            otpTimerSeconds = 60;
+            const timerEl = document.getElementById('otpTimer');
+            const resendBtn = document.getElementById('resendOtpBtn');
+            timerEl.textContent = `Resend available in ${otpTimerSeconds}s`;
+            resendBtn.style.display = 'none';
+            if (otpTimerInterval) clearInterval(otpTimerInterval);
+            otpTimerInterval = setInterval(() => {
+                otpTimerSeconds--;
+                timerEl.textContent = `Resend available in ${otpTimerSeconds}s`;
+                if (otpTimerSeconds <= 0) {
+                    clearInterval(otpTimerInterval);
+                    otpTimerInterval = null;
+                    timerEl.textContent = '';
+                    resendBtn.style.display = 'block';
+                }
+            }, 1000);
+        };
+
+        window.resendOtp = async function() {
+            if (!otpPhone) return;
+            try {
+                await JeframAPI.customerLoginByPhone(otpPhone);
+                window.showToast('New OTP sent!', 'success');
+                window.startOtpTimer();
+            } catch (e) {
+                window.showToast('Failed to resend OTP', 'error');
+            }
+        };
+
+        window.verifyOtp = async function() {
+            const errorEl = document.getElementById('otpError');
+            errorEl.style.display = 'none';
+            const otp = document.getElementById('otpInput').value.trim();
+            if (!otp || otp.length !== 6) {
+                errorEl.textContent = 'Please enter the 6-digit code';
+                errorEl.style.display = 'block';
+                return;
+            }
+            try {
+                const result = await JeframAPI.customerVerifyOtp(otpPhone, otp);
+                localStorage.setItem('jefram_token', result.token);
+                localStorage.setItem('jefram_user', JSON.stringify(result.user));
+                currentUser = result.user;
+                currentUserDocId = result.user.id;
+                window.closeOtpModal();
+                window.closeLoginModal();
+                window.showToast('Welcome back!', 'success');
+                window.updateUserUI();
+            } catch (e) {
+                errorEl.textContent = e.message || 'Invalid OTP. Please try again.';
+                errorEl.style.display = 'block';
+            }
+        };
+
+        window.googleLogin = async function() {
+            if (!window.GOOGLE_CLIENT_ID) {
+                window.showToast('Google login is not configured', 'error');
+                return;
+            }
+            try {
+                if (typeof google === 'undefined' || !google.accounts) {
+                    window.showToast('Google SDK still loading, please try again', 'error');
+                    return;
+                }
+                google.accounts.id.prompt((notification) => {
+                    if (notification.isNotDisplayed()) {
+                        window.showToast('Google login not available', 'error');
+                    }
+                });
+                window._googleLoginResolve = null;
+                window._googleLoginPromise = new Promise((resolve) => { window._googleLoginResolve = resolve; });
+                try {
+                    await window._googleLoginPromise;
+                } catch (e) {
+                    window.showToast('Google login cancelled', 'error');
+                    return;
+                }
+                const credential = window._googleCredential;
+                if (!credential) {
+                    window.showToast('Google login cancelled', 'error');
+                    return;
+                }
+                const response = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + credential);
+                if (!response.ok) {
+                    window.showToast('Google login failed', 'error');
+                    return;
+                }
+                const profile = await response.json();
+                const result = await JeframAPI.googleLogin(credential);
+                localStorage.setItem('jefram_token', result.token);
+                localStorage.setItem('jefram_user', JSON.stringify(result.user));
+                currentUser = result.user;
+                currentUserDocId = result.user.id;
+                window.closeLoginModal();
+                window.showToast('Welcome, ' + result.user.name + '!', 'success');
+                window.updateUserUI();
+            } catch (e) {
+                window.showToast('Google login cancelled or failed', 'error');
+            }
+        };
+
+        window.initGoogleSignIn = function() {
+            if (!window.GOOGLE_CLIENT_ID || typeof google === 'undefined' || !google.accounts) return;
+            try {
+                google.accounts.id.initialize({
+                    client_id: window.GOOGLE_CLIENT_ID,
+                    callback: (response) => {
+                        window._googleCredential = response.credential;
+                        if (window._googleLoginResolve) {
+                            window._googleLoginResolve();
+                        }
+                    }
+                });
+            } catch (e) { }
+        };
+
+        window.appleLogin = async function() {
+            if (!window.APPLE_CLIENT_ID) {
+                window.showToast('Apple login is not configured', 'error');
+                return;
+            }
+            try {
+                if (typeof AppleID === 'undefined' || !AppleID.auth) {
+                    window.showToast('Apple SDK still loading, please try again', 'error');
+                    return;
+                }
+                AppleID.auth.signIn({
+                    clientId: window.APPLE_CLIENT_ID,
+                    scope: 'email name',
+                    redirectURI: window.location.origin + '/',
+                    state: 'state',
+                    nonce: Math.random().toString(36).substring(2),
+                    usePopup: true
+                }).then(async (result) => {
+                    if (result.error) {
+                        window.showToast('Apple login cancelled', 'error');
+                        return;
+                    }
+                    const appleIdToken = result.identityToken;
+                    if (!appleIdToken) {
+                        window.showToast('Apple login cancelled', 'error');
+                        return;
+                    }
+                    const firstName = result.fullName?.givenName || null;
+                    const lastName = result.fullName?.familyName || null;
+                    const email = result.email || null;
+                    const resultData = await JeframAPI.appleLogin({
+                        identityToken: appleIdToken,
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: email
+                    });
+                    localStorage.setItem('jefram_token', resultData.token);
+                    localStorage.setItem('jefram_user', JSON.stringify(resultData.user));
+                    currentUser = resultData.user;
+                    currentUserDocId = resultData.user.id;
+                    window.closeLoginModal();
+                    window.showToast('Welcome, ' + resultData.user.name + '!', 'success');
+                    window.updateUserUI();
+                }).catch((err) => {
+                    if (err && err.error === 'user cancelled') {
+                        return;
+                    }
+                    window.showToast('Apple login cancelled or failed', 'error');
+                });
+            } catch (e) {
+                window.showToast('Apple login cancelled or failed', 'error');
+            }
+        };
+
         window.openLoginModal = function() { document.getElementById('loginModal').style.display = 'flex'; };
         window.closeLoginModal = function() { 
             document.getElementById('loginModal').style.display = 'none'; 
             document.getElementById('loginPhone').value = '';
             document.getElementById('loginPassword').value = '';
+            document.getElementById('loginPhoneOtp').value = '';
+            authMode = 'email';
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            if (document.querySelectorAll('.auth-tab')[0]) document.querySelectorAll('.auth-tab')[0].classList.add('active');
+            document.getElementById('emailAuthSection').style.display = 'block';
+            document.getElementById('phoneAuthSection').style.display = 'none';
         };
         window.openRegisterModal = function() { document.getElementById('registerModal').style.display = 'flex'; };
         window.closeRegisterModal = function() { 
@@ -3384,5 +3697,11 @@
             &copy; 2026 Jefram Stores. All rights reserved.
         </div>
     </footer>
+    <script>
+        fetch('/api/auth/config').then(r => r.json()).then(cfg => {
+            if (cfg.googleEnabled) { window.GOOGLE_CLIENT_ID = cfg.googleClientId; window.initGoogleSignIn(); }
+            if (cfg.appleEnabled) { window.APPLE_CLIENT_ID = 'com.jefram.stores'; }
+        }).catch(() => {});
+    </script>
 </body>
 </html>

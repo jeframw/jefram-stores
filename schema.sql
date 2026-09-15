@@ -12,6 +12,8 @@ CREATE TABLE users (
     address TEXT,
     role VARCHAR(20) DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'delivery_agent', 'product_manager')),
     password_hash TEXT,
+    google_id VARCHAR(255) UNIQUE,
+    apple_id VARCHAR(255) UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -123,6 +125,21 @@ CREATE TABLE config (
     description TEXT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- OTP Sessions table for phone authentication
+CREATE TABLE otp_sessions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    phone VARCHAR(20) NOT NULL,
+    otp VARCHAR(8) NOT NULL,
+    purpose VARCHAR(20) NOT NULL DEFAULT 'login',
+    attempts INTEGER DEFAULT 0,
+    max_attempts INTEGER DEFAULT 5,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_otp_phone ON otp_sessions(phone);
+CREATE INDEX idx_otp_expires ON otp_sessions(expires_at);
 
 -- Indexes for better performance
 CREATE INDEX idx_products_category ON products(category_id);

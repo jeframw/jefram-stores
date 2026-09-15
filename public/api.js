@@ -64,6 +64,31 @@ window.JeframAPI = {
     body: JSON.stringify({ email, password })
   }),
 
+  customerLoginByPhone: (phone) => api('/api/auth/customer/send-otp', {
+    method: 'POST',
+    body: JSON.stringify({ phone })
+  }),
+
+  customerVerifyOtp: (phone, otp) => api('/api/auth/customer/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify({ phone, otp })
+  }),
+
+  customerPhoneRegister: (data) => api('/api/auth/customer/phone-register', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+
+  googleLogin: (token) => api('/api/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ token })
+  }),
+
+  appleLogin: (data) => api('/api/auth/apple', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+
   getCurrentUser: () => api('/api/auth/me'),
 
   // Products
