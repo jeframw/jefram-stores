@@ -12,7 +12,7 @@ Jefram Stores supports three authentication methods for customers:
 
 ## Quick Start (No Configuration Needed)
 
-If you don't configure Twilio, Google, or Apple, the server still runs. Phone OTP will log codes to the console instead of sending real SMS. Google and Apple login buttons will show a "not configured" message.
+If you don't configure Yoola SMS, Google, or Apple, the server still runs. Phone OTP will log codes to the console instead of sending real SMS. Google and Apple login buttons will show a "not configured" message.
 
 ---
 
@@ -22,23 +22,21 @@ If you don't configure Twilio, Google, or Apple, the server still runs. Phone OT
 1. Customer enters phone number → server generates a 6-digit OTP and sends it via SMS
 2. Customer enters the OTP → server verifies and logs the customer in (creates account if new)
 
-### Configure Twilio (optional, recommended for production)
+### Configure Yoola SMS (optional, recommended for production)
 
-Sign up at https://www.twilio.com and get:
-- **TWILIO_SID**: Your Twilio account SID
-- **TWILIO_AUTH_TOKEN**: Your Twilio auth token
-- **TWILIO_FROM_NUMBER**: Your Twilio phone number (e.g., +1234567890)
+Sign up at https://yoola.co.ug and get:
+- **YOOLA_API_KEY**: Your Yoola API key
+- **YOOLA_SENDER_ID**: Your registered sender name (e.g., `Jefram store`)
 
 Add to `.env`:
 ```
-TWILIO_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=your_auth_token
-TWILIO_FROM_NUMBER=+1234567890
+YOOLA_API_KEY=your_yoola_api_key
+YOOLA_SENDER_ID=Jefram store
 ```
 
-**Without Twilio**: OTP codes are printed to the server console instead of being sent as SMS.
+**Without Yoola**: OTP codes are printed to the server console instead of being sent as SMS.
 
-### Testing without Twilio
+### Testing without Yoola
 1. Start the server
 2. Open the login modal, switch to "Phone" tab
 3. Enter a phone number, click "Send OTP"
@@ -67,7 +65,7 @@ TWILIO_FROM_NUMBER=+1234567890
 
 Add to `.env`:
 ```
-GOOGLE_CLIENT_ID=your_google_client_id_from_console
+GOOGLE_CLIENT_ID=your_google_client_id
 ```
 
 ### Google Cloud Setup Details
@@ -99,7 +97,7 @@ GOOGLE_CLIENT_ID=your_google_client_id_from_console
 
 Add to `.env`:
 ```
-APPLE_SERVICE_ID=com.jefram.stores.auth
+APPLE_SERVICE_ID=your_service_id
 APPLE_CLIENT_ID=com.jefram.stores
 APPLE_KEY_ID=AB12CD34EF
 APPLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg...\n-----END PRIVATE KEY-----
@@ -111,19 +109,10 @@ If you have the `.p8` file, convert it to a single-line string:
 
 ```bash
 # On Linux/Mac:
-APPLE_PRIVATE_KEY=$(cat AuthKey_XXX.p8 | tr '\n' '\n')
-# Or use a Node script to read and set it
+APPLE_PRIVATE_KEY=$(cat AuthKey_XXX.p8)
 
 # On Windows PowerShell:
 $key = Get-Content "AuthKey_XXX.p8" -Raw
-$env:APPLE_PRIVATE_KEY = $key
-```
-
-For production, consider storing the key in a file and loading it:
-```javascript
-// In server.js, you can also load from file:
-const fs = require('fs');
-const appleKey = process.env.APPLE_PRIVATE_KEY || fs.readFileSync(process.env.APPLE_PRIVATE_KEY_FILE, 'utf8');
 ```
 
 ### Important Apple Notes
@@ -146,9 +135,8 @@ const appleKey = process.env.APPLE_PRIVATE_KEY || fs.readFileSync(process.env.AP
 | `PORT` | No | Server port (default: 3000) |
 | `NODE_ENV` | No | Environment (development/production) |
 | `GOOGLE_CLIENT_ID` | No | Google OAuth client ID |
-| `TWILIO_SID` | No | Twilio account SID |
-| `TWILIO_AUTH_TOKEN` | No | Twilio auth token |
-| `TWILIO_FROM_NUMBER` | No | Twilio phone number |
+| `YOOLA_API_KEY` | No | Yoola SMS API key |
+| `YOOLA_SENDER_ID` | No | Yoola SMS sender name |
 | `APPLE_SERVICE_ID` | No | Apple Service ID |
 | `APPLE_CLIENT_ID` | No | Apple client ID |
 | `APPLE_KEY_ID` | No | Apple key ID |

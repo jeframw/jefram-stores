@@ -54,12 +54,25 @@ function verifyOtp(phone, otp) {
 }
 
 function sendSms(phone, message) {
-  const twilioSid = process.env.TWILIO_SID;
-  const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-  const twilioFrom = process.env.TWILIO_FROM_NUMBER;
-  if (twilioSid && twilioToken && twilioFrom) {
-    const twilio = require('twilio')(twilioSid, twilioToken);
-    return twilio.messages.create({ body: message, from: twilioFrom, to: phone });
+  const yoolaApiKey = process.env.YOOLA_API_KEY;
+  const yoolaSender = process.env.YOOLA_SENDER_ID;
+  if (yoolaApiKey && yoolaSender) {
+    const qs = new URLSearchParams({
+      api_key: yoolaApiKey,
+      sender: yoolaSender,
+      to: phone,
+      message: message
+    });
+    return fetch(`https://yoola.co.ug/api/sendSMS?${qs.toString()}`).then(res => {
+      if (!res.ok) throw new Error(`Yoola SMS HTTP ${res.status}`);
+      return res.json();
+    }).then(data => {
+      console.log(`[SMS Yoola] To: ${phone} | Response:`, JSON.stringify(data));
+      return data;
+    }).catch(err => {
+      console.error(`[SMS Yoola Error] To: ${phone} |`, err.message);
+      return { error: err.message };
+    });
   }
   console.log(`[SMS] To: ${phone} | Message: ${message}`);
   return Promise.resolve({ sid: 'mock-sms-sid' });
@@ -582,7 +595,7 @@ app.get('/api/auth/config', async (req, res) => {
     googleClientId: process.env.GOOGLE_CLIENT_ID || '',
     appleEnabled: Boolean(process.env.APPLE_SERVICE_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY),
     phoneOtpEnabled: true,
-    twilioConfigured: Boolean(process.env.TWILIO_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER)
+    smsConfigured: Boolean(process.env.YOOLA_API_KEY && process.env.YOOLA_SENDER_ID)
   });
 });
 
